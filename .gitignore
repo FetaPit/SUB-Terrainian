@@ -23,8 +23,8 @@ contracts/cache/
 # Foundry dependencies (installed via forge install)
 lib/
 
-# Local artwork / portrait cache
-portraits/
+# Local artwork / portrait cache (downloaded files, not source code)
+portraits/cache/
 artwork_cache/
 folder_jpg_backup/
 
