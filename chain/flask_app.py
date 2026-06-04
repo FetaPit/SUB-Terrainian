@@ -165,6 +165,81 @@ def run_phase(phase: str):
                              "Cache-Control": "no-cache"})
 
 
+# ── PWA manifest, icon, service worker ───────────────────────────────────────
+
+@app.get("/manifest.json")
+def pwa_manifest():
+    return Response(json.dumps({
+        "name": "SUB-Terrainian",
+        "short_name": "SUB-T",
+        "description": "Personal discography builder — PT Lived Design",
+        "start_url": "/",
+        "display": "standalone",
+        "background_color": "#0a0a0a",
+        "theme_color": "#0a0a0a",
+        "orientation": "any",
+        "icons": [
+            {"src": "/icon/192", "sizes": "192x192", "type": "image/png", "purpose": "any maskable"},
+            {"src": "/icon/512", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"},
+        ],
+    }), mimetype="application/manifest+json")
+
+
+@app.get("/icon/<int:size>")
+def pwa_icon(size: int):
+    from PIL import Image, ImageDraw, ImageFont
+    import io as _io
+    img  = Image.new("RGB", (size, size), "#0a0a0a")
+    draw = ImageDraw.Draw(img)
+    pad  = size // 8
+    draw.rounded_rectangle([pad, pad, size - pad, size - pad],
+                            radius=size // 6, fill="#1a1a1a")
+    fs = size // 3
+    try:
+        font = ImageFont.truetype("/system/fonts/Roboto-Bold.ttf", fs)
+    except Exception:
+        font = ImageFont.load_default()
+    bb = draw.textbbox((0, 0), "ST", font=font)
+    tw, th = bb[2] - bb[0], bb[3] - bb[1]
+    draw.text(((size - tw) / 2, (size - th) / 2 - bb[1]), "ST", fill="#3b82f6", font=font)
+    buf = _io.BytesIO()
+    img.save(buf, "PNG")
+    buf.seek(0)
+    return Response(buf.read(), mimetype="image/png",
+                    headers={"Cache-Control": "public, max-age=86400"})
+
+
+@app.get("/sw.js")
+def service_worker():
+    js = r"""
+const CACHE = 'sub-t-v1';
+self.addEventListener('install', e => {
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(['/'])));
+  self.skipWaiting();
+});
+self.addEventListener('activate', e => {
+  e.waitUntil(caches.keys().then(keys =>
+    Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
+  ));
+  self.clients.claim();
+});
+self.addEventListener('fetch', e => {
+  const url = new URL(e.request.url);
+  if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/run/')) return;
+  e.respondWith(
+    fetch(e.request).then(r => {
+      if (r.ok && e.request.method === 'GET') {
+        caches.open(CACHE).then(c => c.put(e.request, r.clone()));
+      }
+      return r;
+    }).catch(() => caches.match(e.request))
+  );
+});
+"""
+    return Response(js, mimetype="application/javascript",
+                    headers={"Service-Worker-Allowed": "/"})
+
+
 # ── Auth ──────────────────────────────────────────────────────────────────────
 
 @app.post("/connect")
@@ -341,6 +416,14 @@ def connect_page():
 # HTML Templates — mobile-first, dark, no external CDN
 # ══════════════════════════════════════════════════════════════════════════════
 
+_PWA_HEAD = """
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#0a0a0a">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="/icon/192">
+<script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/sw.js');}</script>
+"""
+
 _BASE_CSS = """
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
@@ -455,13 +538,17 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 #loadMore { margin-top: 12px; }
 #loadingSpinner { text-align: center; padding: 24px; color: var(--muted); }
 </style>
+""" + _PWA_HEAD + """
 </head>
 <body>
 
 <div class="header">
   <h1>SUB-Terrainian</h1>
-  <div id="walletPill" class="pill" onclick="location.href='/connect'" style="cursor:pointer">
-    <span class="dot dot-grey"></span> connect
+  <div style="display:flex;align-items:center;gap:10px">
+    <a href="/settings" style="color:var(--muted);font-size:20px;line-height:1" title="Settings">⚙</a>
+    <div id="walletPill" class="pill" onclick="location.href='/connect'" style="cursor:pointer">
+      <span class="dot dot-grey"></span> connect
+    </div>
   </div>
 </div>
 
@@ -688,6 +775,7 @@ ALBUM_HTML = """<!DOCTYPE html>
 .track-title { flex:1; font-size:14px; }
 .track-dur { color:var(--muted); font-size:12px; }
 </style>
+""" + _PWA_HEAD + """
 </head>
 <body>
 <div class="header">
@@ -795,6 +883,7 @@ CONNECT_HTML = """<!DOCTYPE html>
 .connect-card { max-width: 420px; margin: 60px auto; padding: 0 16px; }
 .wallet-icon { font-size: 48px; text-align:center; margin-bottom:16px; }
 </style>
+""" + _PWA_HEAD + """
 </head>
 <body>
 <div class="connect-card gap-16">
@@ -846,6 +935,117 @@ document.getElementById('connectBtn').addEventListener('click', async () => {
     msg.innerHTML='<span style="color:var(--red)">'+e.message+'</span>';
   }
 });
+</script>
+</body>
+</html>"""
+
+
+# ── Settings ──────────────────────────────────────────────────────────────────
+
+_SETTINGS_KEYS = [
+    ("MUSIC_ROOT",             "Music library path",      False),
+    ("MANIFEST_PATH",          "Database path",           False),
+    ("THEAUDIODB_KEY",         "TheAudioDB API key",      True),
+    ("BASE_RPC_URL",           "Base RPC URL",            False),
+    ("MUSIC_EDITION_ADDRESS",  "MusicEdition contract",   False),
+    ("PHYSICAL_CLAIM_ADDRESS", "PhysicalClaim contract",  False),
+    ("PINATA_JWT",             "Pinata JWT",              True),
+]
+
+
+@app.get("/settings")
+def settings_page():
+    vals = {k: os.getenv(k, "") for k, _, _ in _SETTINGS_KEYS}
+    return render_template_string(SETTINGS_HTML, keys=_SETTINGS_KEYS, vals=vals)
+
+
+@app.post("/api/settings")
+def save_settings():
+    data = request.json or {}
+    env_path = Path(".env")
+    lines = env_path.read_text().splitlines() if env_path.exists() else []
+    known = {k for k, _, _ in _SETTINGS_KEYS}
+    kept  = [l for l in lines
+             if not ("=" in l and not l.startswith("#")
+                     and l.split("=", 1)[0].strip() in known)]
+    for k, _, _ in _SETTINGS_KEYS:
+        if k in data and str(data[k]).strip():
+            v = str(data[k]).strip()
+            kept.append(f"{k}={v}")
+            os.environ[k] = v
+    env_path.write_text("\n".join(kept) + "\n")
+    return jsonify({"saved": True})
+
+
+SETTINGS_HTML = """<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Settings — SUB-Terrainian</title>
+<style>
+""" + _BASE_CSS + """
+.sw { max-width: 540px; margin: 0 auto; }
+.field { display:flex; flex-direction:column; gap:6px; }
+.field label { font-size:13px; font-weight:600; color:var(--muted); }
+.field input { background:var(--bg3); border:1px solid var(--line); border-radius:8px;
+  padding:10px 12px; color:var(--text); font-size:14px; width:100%;
+  font-family:monospace; }
+.field input:focus { outline:2px solid var(--blue); }
+</style>
+""" + _PWA_HEAD + """
+</head>
+<body>
+<div class="header">
+  <a href="/" style="color:var(--text);font-size:20px">←</a>
+  <h1>Settings</h1>
+  <span></span>
+</div>
+<div class="page sw gap-16">
+  <div class="card" style="padding:16px">
+    <div class="gap-12">
+      {% for key, label, secret in keys %}
+      <div class="field">
+        <label>{{ label }}</label>
+        <input data-key="{{ key }}"
+          type="{{ 'password' if secret else 'text' }}"
+          value="{{ '' if secret and vals[key] else vals[key] }}"
+          placeholder="{{ '(set — hidden)' if secret and vals[key] else '' }}"
+          autocomplete="off" spellcheck="false">
+      </div>
+      {% endfor %}
+    </div>
+    <button class="btn btn-primary btn-full" style="margin-top:16px" onclick="save()">
+      Save settings
+    </button>
+  </div>
+  <div id="msg" class="card" style="display:none;padding:14px;font-size:14px"></div>
+  <p class="muted" style="font-size:12px;text-align:center">
+    Saved to <code style="color:var(--text)">.env</code> in the project root.
+    Restart the server to apply RPC/contract changes.
+  </p>
+</div>
+<script>
+async function save() {
+  const payload = {};
+  document.querySelectorAll('[data-key]').forEach(el => {
+    if (el.value.trim()) payload[el.dataset.key] = el.value.trim();
+  });
+  const res = await fetch('/api/settings', {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(payload),
+  }).catch(() => null);
+  const msg = document.getElementById('msg');
+  msg.style.display = 'block';
+  if (res) {
+    const d = await res.json();
+    msg.innerHTML = d.saved
+      ? '<span style="color:var(--green)">✓ Settings saved.</span>'
+      : '<span style="color:var(--red)">Save failed.</span>';
+  } else {
+    msg.innerHTML = '<span style="color:var(--red)">Network error.</span>';
+  }
+}
 </script>
 </body>
 </html>"""

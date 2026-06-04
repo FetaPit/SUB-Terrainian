@@ -106,11 +106,26 @@ def run_all(music_root: str = None, force: bool = False):
     print("\nAll phases complete.")
 
 
+def _open_browser(url: str):
+    import shutil
+    import threading
+    import time as _t
+    def _try():
+        _t.sleep(1.5)
+        if shutil.which("termux-open-url"):
+            subprocess.run(["termux-open-url", url], capture_output=True)
+        else:
+            import webbrowser
+            webbrowser.open(url)
+    threading.Thread(target=_try, daemon=True).start()
+
+
 def serve(port: int = 5000):
     os.environ.setdefault("FLASK_SECRET_KEY", os.urandom(24).hex())
     from chain.flask_app import app
-    print(f"SUB-Terrainian dashboard → http://localhost:{port}")
-    print("Open this URL in your Android browser (or MetaMask Mobile).")
+    url = f"http://localhost:{port}"
+    print(f"SUB-Terrainian → {url}")
+    _open_browser(url)
     app.run(host="0.0.0.0", port=port, debug=False, threaded=True)
 
 
