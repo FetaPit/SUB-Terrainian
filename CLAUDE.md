@@ -107,6 +107,56 @@ See `HANDOVER_termux_to_claude_code.md` §8 for open questions Pete needs to dec
 
 Flag these in-session and wait.
 
+## Venture Control Dashboard Automation
+
+The PT Live Design Venture Control dashboard lives at `FetaPit/Control_Room/index.html` and is hosted at `https://fetapit.github.io/Control_Room/`.
+
+**Rule: whenever a sprint is completed, a task is closed, or a new project/Knox entry is created, append the corresponding operation(s) to `venture_control/pending.json` in this repo.** The Stop hook (`.claude/settings.json`) runs `tools/sync_dashboard.py --auto` at the end of every session and pushes the queued updates to Control_Room automatically.
+
+### When to write an operation
+
+| Event | Operation type |
+|---|---|
+| Sprint completed | `update_project` — bump `readiness`, set task `status:"Done"` via `update_task` |
+| New task added to a project | `update_task` or edit pending.json manually |
+| New Knox asset/code entry | `add_knox` |
+| New project started | Edit `venture_control/pending.json` manually with `add_project` (future) |
+
+### Operation format
+
+```json
+// venture_control/pending.json
+{
+  "operations": [
+    {
+      "type": "update_project",
+      "code": "26.002",
+      "fields": { "readiness": 70, "status": "In progress", "touched": "2026-06-06", "streak": 2 }
+    },
+    {
+      "type": "update_task",
+      "task_code": "26.002.07",
+      "fields": { "status": "Done" }
+    },
+    {
+      "type": "add_knox",
+      "entry": {
+        "proj": "26.002",
+        "ref": "26.002_BLD_CODE_Example_20260606_v1.0_OFFICIAL",
+        "title": "Example Knox entry",
+        "type": "Code", "cls": "OFFICIAL",
+        "loc": "https://github.com/FetaPit/SUB-Terrainian",
+        "note": "Description here."
+      }
+    }
+  ]
+}
+```
+
+**CONTROL_ROOM_TOKEN** must be set in `.env` for pushes to work. Pete: create a GitHub PAT with `repo` scope on `FetaPit/Control_Room`, then add `CONTROL_ROOM_TOKEN=ghp_...` to `.env`.
+
+If the token is not set, the Stop hook exits silently — Claude Code sessions are never blocked.
+
 ## First action when this project opens in Claude Code
 
 Read `CLAUDE.md` (this file), `HANDOVER_termux_to_claude_code.md`, then `fetch_v3.py`. **Without writing any new code yet**, produce:
