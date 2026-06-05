@@ -4,11 +4,11 @@
       "type": "update_project",
       "code": "26.002",
       "fields": {
-        "readiness": 65,
+        "readiness": 70,
         "status": "In progress",
         "pub": "Alpha",
         "touched": "2026-06-05",
-        "streak": 1
+        "streak": 2
       }
     },
     {
@@ -57,6 +57,18 @@
         "cls": "OFFICIAL",
         "loc": "https://github.com/FetaPit/SUB-Terrainian",
         "note": "Run: python poc/demo.py --sample 20. Saves poc/last_report.json. Send MD to Maulik Raviya / Krosbits."
+      }
+    },
+    {
+      "type": "add_knox",
+      "entry": {
+        "proj": "26.002",
+        "ref": "26.002_BLD_CODE_VentureSync_20260605_v1.0_OFFICIAL",
+        "title": "Venture Control automation — tools/sync_dashboard.py + GitHub Actions workflow + global Claude Code hook",
+        "type": "Code",
+        "cls": "OFFICIAL",
+        "loc": "https://github.com/FetaPit/SUB-Terrainian",
+        "note": "Cross-platform: Stop hook fires for all Claude Code projects. Queue mode pushes ops to Control_Room/pending/; GitHub Actions applies to dashboard. Chat instructions in venture_control/CHAT_WORKFLOW.md."
       }
     }
   ]

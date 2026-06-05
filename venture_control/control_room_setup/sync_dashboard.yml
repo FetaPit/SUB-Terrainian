@@ -1,0 +1,29 @@
+name: Sync Dashboard
+
+# Triggers when any pending/**.json file is pushed to main.
+# Also runnable manually from GitHub Actions tab.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "pending/**"
+  workflow_dispatch:
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Apply pending operations
+        run: python3 apply_ops.py
+
+      - name: Commit updated dashboard
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore: auto-sync venture dashboard"
+          file_pattern: "index.html pending/**"

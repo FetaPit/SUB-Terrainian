@@ -2,22 +2,36 @@
 """
 tools/sync_dashboard.py — Venture Control dashboard sync
 
-Reads venture_control/pending.json, applies operations to the
-PT Live Design Venture Control dashboard hosted in FetaPit/Control_Room,
-then clears the queue.
+Reads a pending.json file and pushes the operations to FetaPit/Control_Room.
+
+Two modes:
+  --queue  (default): push ops as pending/<timestamp>.json to Control_Room.
+           GitHub Actions picks it up and applies it to index.html automatically.
+           Best when GitHub Actions workflow is set up in Control_Room.
+
+  --direct: download index.html, apply ops locally, push full file back.
+           Works without GitHub Actions — useful as a fallback.
 
 Requires: CONTROL_ROOM_TOKEN in .env (GitHub PAT, repo scope on Control_Room)
 
 Usage:
-    python tools/sync_dashboard.py          # apply pending ops + push
-    python tools/sync_dashboard.py --auto   # same but silent on no-token / empty queue
-    python tools/sync_dashboard.py --dry    # show what would change, no push
-    python tools/sync_dashboard.py --status # print pending queue
+    python tools/sync_dashboard.py                  # queue mode, auto-detect pending.json
+    python tools/sync_dashboard.py --auto           # silent on no-token / empty queue
+    python tools/sync_dashboard.py --direct         # direct HTML modification mode
+    python tools/sync_dashboard.py --dry            # show what would change, no push
+    python tools/sync_dashboard.py --status         # print pending queue
+    python tools/sync_dashboard.py --pending PATH   # use a specific pending.json path
 
-Operation types in pending.json:
-  update_project  : update scalar fields on a project (readiness, status, pub, touched, streak)
-  update_task     : update a task's status, deadline, or done flag
+Pending file search order (first found wins):
+  1. Path from --pending flag
+  2. ./venture_control/pending.json  (project-local)
+  3. ~/.claude/venture_control/pending.json  (global, used by all projects)
+
+Operation types:
+  update_project  : scalar fields on a project (readiness, status, pub, touched, streak)
+  update_task     : task status, deadline, done flag
   add_knox        : append a Knox asset/doc entry
+  add_project     : append a new project entry
 """
 
 import json
@@ -25,13 +39,19 @@ import re
 import base64
 import os
 import sys
+import datetime
 from pathlib import Path
 
 BASE_DIR = Path(__file__).parent.parent
-PENDING_PATH = BASE_DIR / "venture_control" / "pending.json"
 REPO = "FetaPit/Control_Room"
 FILE_PATH = "index.html"
 API_BASE = "https://api.github.com"
+
+# Pending file search order
+_PENDING_CANDIDATES = [
+    BASE_DIR / "venture_control" / "pending.json",
+    Path.home() / ".claude" / "venture_control" / "pending.json",
+]
 
 HEADERS = lambda token: {
     "Authorization": f"token {token}",
@@ -205,14 +225,21 @@ def _dict_to_js(d: dict) -> str:
 def apply_add_knox(html: str, entry: dict) -> str:
     """Append a Knox entry before the closing ]} of the knox array."""
     js_entry = "    " + _dict_to_js(entry)
-    # Find the knox array closer: last entry before `]` then `}`  then `};`
-    # Pattern: last item in knox array, followed by \n  ]
     pattern = r'(knox:\s*\[[\s\S]*?)(^\s*\]\s*\n?\s*\};)'
     m = re.search(pattern, html, re.MULTILINE)
     if not m:
         raise ValueError("Cannot find knox array in SEED")
-    insert_at = m.start(2)
-    return html[:insert_at] + js_entry + ",\n  " + html[insert_at:]
+    return html[:m.start(2)] + js_entry + ",\n  " + html[m.start(2):]
+
+
+def apply_add_project(html: str, project: dict) -> str:
+    """Append a new project before the knox section."""
+    js_entry = "    " + _dict_to_js(project)
+    pattern = r'(projects:\s*\[[\s\S]*?)(^\s*\]\s*,\s*\n\s*knox\s*:)'
+    m = re.search(pattern, html, re.MULTILINE)
+    if not m:
+        raise ValueError("Cannot find projects array end in SEED")
+    return html[:m.start(2)] + js_entry + ",\n  " + html[m.start(2):]
 
 
 # ── Operation dispatcher ──────────────────────────────────────────────────────
@@ -225,21 +252,32 @@ def apply_operation(html: str, op: dict) -> str:
         return apply_update_task(html, op["task_code"], op["fields"])
     elif op_type == "add_knox":
         return apply_add_knox(html, op["entry"])
+    elif op_type == "add_project":
+        return apply_add_project(html, op["project"])
     else:
         raise ValueError(f"Unknown operation type: {op_type!r}")
 
 
-# ── Main ──────────────────────────────────────────────────────────────────────
+# ── Pending file helpers ──────────────────────────────────────────────────────
 
-def load_pending() -> list:
-    if not PENDING_PATH.exists():
-        return []
-    data = json.loads(PENDING_PATH.read_text("utf-8"))
+def find_pending(explicit: str | None = None) -> Path | None:
+    """Return the first pending.json that exists, or None."""
+    if explicit:
+        p = Path(explicit).expanduser()
+        return p if p.exists() else None
+    for candidate in _PENDING_CANDIDATES:
+        if candidate.expanduser().exists():
+            return candidate.expanduser()
+    return None
+
+
+def load_pending(path: Path) -> list:
+    data = json.loads(path.read_text("utf-8"))
     return data.get("operations", [])
 
 
-def clear_pending():
-    PENDING_PATH.write_text(json.dumps({"operations": []}, indent=2), encoding="utf-8")
+def clear_pending(path: Path):
+    path.write_text(json.dumps({"operations": []}, indent=2), encoding="utf-8")
 
 
 def get_token(silent: bool = False) -> str | None:
@@ -256,22 +294,66 @@ def get_token(silent: bool = False) -> str | None:
     return token
 
 
+# ── Queue mode: push ops JSON to Control_Room/pending/ ───────────────────────
+
+def queue_push(token: str, ops: list, dry_run: bool = False) -> bool:
+    """Push pending ops as a timestamped JSON file to Control_Room/pending/."""
+    ts = datetime.datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+    remote_path = f"pending/{ts}.json"
+    content = json.dumps({"operations": ops}, indent=2, ensure_ascii=False)
+
+    if dry_run:
+        print(f"[DRY RUN] Would push {len(ops)} op(s) to {REPO}/{remote_path}")
+        return True
+
+    requests = _get_requests()
+    r = requests.put(
+        f"{API_BASE}/repos/{REPO}/contents/{remote_path}",
+        headers=HEADERS(token),
+        json={
+            "message": f"chore: queue {len(ops)} dashboard op(s)",
+            "content": base64.b64encode(content.encode("utf-8")).decode(),
+        },
+        timeout=30,
+    )
+    r.raise_for_status()
+    print(f"  ✓ Queued → {REPO}/{remote_path}")
+    print(f"  ✓ GitHub Actions will apply {len(ops)} op(s) to dashboard automatically")
+    return True
+
+
 def main():
     args = sys.argv[1:]
     silent = "--auto" in args
     dry_run = "--dry" in args
     status_only = "--status" in args
+    direct_mode = "--direct" in args
+    pending_arg = None
+    for i, a in enumerate(args):
+        if a == "--pending" and i + 1 < len(args):
+            pending_arg = args[i + 1]
 
-    ops = load_pending()
+    pending_path = find_pending(pending_arg)
 
     if status_only:
-        if not ops:
-            print("venture_control/pending.json — no pending operations.")
+        if pending_path is None:
+            print("No pending.json found.")
         else:
-            print(f"venture_control/pending.json — {len(ops)} pending operation(s):")
-            for i, op in enumerate(ops, 1):
-                print(f"  {i}. {op.get('type')} {op.get('code') or op.get('task_code') or ''}")
+            ops = load_pending(pending_path)
+            if not ops:
+                print(f"{pending_path} — no pending operations.")
+            else:
+                print(f"{pending_path} — {len(ops)} pending operation(s):")
+                for i, op in enumerate(ops, 1):
+                    print(f"  {i}. {op.get('type')} {op.get('code') or op.get('task_code') or ''}")
         return
+
+    if pending_path is None:
+        if not silent:
+            print("No pending.json found — nothing to sync.")
+        return
+
+    ops = load_pending(pending_path)
 
     if not ops:
         if not silent:
@@ -284,7 +366,19 @@ def main():
             return
         sys.exit(1)
 
-    print(f"Syncing {len(ops)} operation(s) to {REPO}/{FILE_PATH} ...")
+    n = len(ops)
+
+    # Queue mode: push ops JSON to Control_Room/pending/ → GitHub Actions handles the merge
+    if not direct_mode:
+        print(f"Queuing {n} operation(s) to {REPO}/pending/ ...")
+        queue_push(token, ops, dry_run=dry_run)
+        if not dry_run:
+            clear_pending(pending_path)
+            print(f"  ✓ {pending_path.name} cleared")
+        return
+
+    # Direct mode: download HTML, apply ops locally, push full file back
+    print(f"Syncing {n} operation(s) directly to {REPO}/{FILE_PATH} ...")
 
     html, sha = github_get_file(token, FILE_PATH)
     original_html = html
@@ -309,16 +403,15 @@ def main():
 
     if html == original_html:
         print("HTML unchanged after operations — skipping push.")
-        clear_pending()
+        clear_pending(pending_path)
         return
 
-    n = len(ops)
     msg = f"chore: venture dashboard sync ({n} update{'s' if n != 1 else ''})"
     github_put_file(token, FILE_PATH, html, sha, msg)
     print(f"  ✓ Dashboard pushed to {REPO}")
 
-    clear_pending()
-    print("  ✓ pending.json cleared")
+    clear_pending(pending_path)
+    print(f"  ✓ {pending_path.name} cleared")
 
     if failed:
         print(f"\n  {len(failed)} operation(s) failed (removed from queue):")
