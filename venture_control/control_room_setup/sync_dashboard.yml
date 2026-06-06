@@ -1,12 +1,14 @@
 name: Sync Dashboard
 
-# Triggers when any pending/**.json file is pushed to main.
-# Also runnable manually from GitHub Actions tab.
+# Triggers when any pending/**.json file is pushed to main,
+# daily at 06:00 UTC, and manually from the Actions tab.
 on:
   push:
     branches: [main]
     paths:
       - "pending/**"
+  schedule:
+    - cron: "0 6 * * *"
   workflow_dispatch:
 
 jobs:
