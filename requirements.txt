@@ -1,0 +1,11 @@
+# SUB-Terrainian v0.1 — Python dependencies
+# Install on Termux: pip install -r requirements.txt
+# All packages install from PyPI without a compile chain.
+
+requests>=2.31.0
+mutagen>=1.47.0
+Pillow>=10.0.0
+numpy>=1.24.0
+Flask>=3.0.0
+python-dotenv>=1.0.0
+pytest>=8.0.0

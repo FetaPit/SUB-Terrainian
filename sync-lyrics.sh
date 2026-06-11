@@ -21,7 +21,7 @@
 
 MUSIC_DIR="${1:-$HOME/storage/shared}"
 API_BASE="https://lrclib.net/api"
-USER_AGENT="sub-terrainian/1.0 (https://github.com/FetaPit/Pareto-SUB-Terrainian)"
+USER_AGENT="SubTerrainian/0.1 ( contact@ptliveddesign.example )"
 SLEEP_SECS="0.4"
 
 EXTS=("mp3" "flac" "wav" "m4a" "aac" "ogg" "opus" "wma" "ape" "alac")

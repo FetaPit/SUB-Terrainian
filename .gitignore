@@ -1,0 +1,33 @@
+# Environment
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+
+# SQLite manifest
+*.db
+*.db-wal
+*.db-shm
+
+# Generated metadata (rebuild from manifest)
+web3/metadata/
+
+# Foundry build output
+contracts/out/
+contracts/cache/
+
+# Foundry dependencies (installed via forge install)
+lib/
+
+# Local artwork / portrait cache (downloaded files, not source code)
+portraits/cache/
+artwork_cache/
+folder_jpg_backup/
+
+# OS
+.DS_Store
+Thumbs.db
