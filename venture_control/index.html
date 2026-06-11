@@ -1228,39 +1228,7 @@ function dashByCompany(){
  });
  return h;
 }
-function renderDash(){
- const tot=STATE.projects.length, live=STATE.projects.filter(p=>p.status==="Live").length;
- const avg=Math.round(STATE.projects.reduce((s,p)=>s+p.readiness,0)/tot);
- const active=STATE.projects.filter(p=>p.status!=="Scope TBC");
- const ranked=[...active].sort((a,b)=>priorityScore(b)-priorityScore(a));
- const hero=ranked[0]; const hn=hero?nextTask(hero):null;
- let h=`<div class="nowhead">Dashboard · ${new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'})} · ${tot} ventures · ${live} live · avg readiness ${avg}/100</div>`;
- h+=`<div class="hero">
-   <div class="lab">★ If you do one thing today</div>
-   <h2>${hero?hero.smallest:"All clear."}</h2>
-   <div class="meta">${hero?`${hero.code} · ${hero.name}${hn?` · then: ${hn.name}`:""}`:`${""}`}</div>
-   <div class="act row">
-     ${hero?`<button class="btn y" onclick="touch('${hero.code}')">&#10003; Done it · log streak</button>":""}
-     ${hn?`<button class="btn ghost" onclick="toGoogleTask('${hn.code}')">→ Google Tasks</button>":""}
-     <button class="btn ghost" onclick="sendTodayList()">→ Push whole list</button>
-   </div></div>`;
- h+=`<div class="mom"><div class="mom-h">${iconSVG('bolt','#f2b705',18)}<h3>Momentum — one tiny step per venture</h3><span class="sub">${active.length} live</span></div>`;
- ranked.forEach(p=>{
-   const ds=daysSince(p.touched); const cold=ds>14; const mt=topMicro(p);
-   h+=`<div class="mrow">${plink(p.code,pIcon(p,22))}<span class="mc plink" onclick="openProfile('${p.code}')">${p.code}</span>
-     <span class="mtxt"><span class="nextlink" onclick="gotoTask('${(nextTask(p)||{}).code||''}')">${p.smallest}</span><small>${p.name}${cold?` · COLD ${ds}d`:""}</small></span>
-     <span class="mstreak">🔥${p.streak||0}</span>
-     <button class="mbtn done" onclick="touch('${p.code}')">&#10003;</button>
-     <button class="mbtn ai" onclick="aiSuggest('${p.code}')">❆</button></div>`;
-   if(mt)h+=`<div class="micrline"><span class="ml">μ next</span><span class="mv" onclick="gotoTask('${mt.t.code}')">${mt.sub.n}</span><span class="mono muted" style="font-size:9px">↳ ${mt.t.code}</span></div>`;
- });
- h+=`</div>`;
- h+=`<div class="nowdash-h">${iconSVG('grid','#1f4ed8',18)} Portfolio — grouped by parent company <span class="mono muted" style="font-size:10px;font-weight:400;margin-left:auto">every venture, under its parent company</span></div>`;
- h+=dashByCompany();
- const tbc=STATE.projects.filter(p=>p.status==="Scope TBC");
- if(tbc.length){ h+=`<div class="card" style="margin-top:14px"><div class="card-h" style="background:#bbb"><span class="cdot" style="background:#fff"></span><h3>Scope TBC — need your one-liner</h3></div><div class="card-b row">${tbc.map(p=>`<button class="mini" onclick="openProj('${p.code}')">${pIcon(p,14)} ${p.code} ${p.name}</button>`).join("")}</div></div>`; }
- return h;
-}
+function renderDash(){ return renderToday(); }
 /* ---------- KNOX ---------- */
 function renderKnox(){
  let h=`<div class="convention"><b>VAULT-IT KNOX — IP & ASSET REGISTER</b><br>
