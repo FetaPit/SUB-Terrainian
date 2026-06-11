@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Space+Mono:wght@400;700&family=Archivo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <style>
 :root{
  --ink:#16140f;--paper:#f4efe2;--paper2:#ece5d3;--card:#fbf8ef;--hair:#d4cdb9;
@@ -242,6 +243,7 @@ svg.deplines{color:var(--ink)}
 .idpill button:hover{background:var(--ink);color:var(--paper)}
 .savedot{font-family:'Space Mono';font-size:9px;color:var(--muted);padding:0 10px;display:flex;align-items:center;gap:5px;border-left:1px solid var(--hair)}
 .savedot b{color:var(--green)}
+.syncdot{font-family:'Space Mono';font-size:9px;padding:0 10px;border-left:1px solid var(--hair);display:flex;align-items:center;min-width:0;transition:color .3s}
 /* ---------- TIMER BAR (fixed bottom) ---------- */
 .timebar{position:fixed;left:0;right:0;bottom:0;height:54px;background:var(--ink);color:var(--paper);display:flex;align-items:center;gap:12px;padding:0 14px;z-index:40;border-top:3px solid var(--yellow)}
 .timebar .live{font-family:'Space Mono';font-size:20px;font-weight:700;letter-spacing:1px}
@@ -416,8 +418,9 @@ tr:hover td{background:var(--paper2)}
    <button class="themebtn" id="themebtn" onclick="toggleTheme()">◐ Dark</button>
    <button onclick="doExport()">Export</button>
    <button onclick="document.getElementById('imp').click()">Import</button>
+   <button onclick="openSyncModal()">⊕ Sync</button>
   </div>
-  <div class="idpill"><button id="idbtn" onclick="changeMe()">You: Pete</button><span class="savedot" id="savedot">memory</span></div>
+  <div class="idpill"><button id="idbtn" onclick="changeMe()">You: Pete</button><span class="savedot" id="savedot">memory</span><span class="syncdot" id="syncdot"></span></div>
  </div>
 </header>
 <input type="file" id="imp" accept="application/json" style="display:none" onchange="doImport(event)">
@@ -914,7 +917,7 @@ const SKEY="ptld-venture-control-v1";
 let STORE_OK=false;
 (function(){ try{ localStorage.setItem("__t","1"); localStorage.removeItem("__t"); STORE_OK=true; }catch(e){ STORE_OK=false; } })();
 function loadState(){ if(!STORE_OK)return null; try{ const s=localStorage.getItem(SKEY); return s?JSON.parse(s):null; }catch(e){ return null; } }
-function saveState(){ if(!STORE_OK)return; try{ localStorage.setItem(SKEY,JSON.stringify(STATE)); const d=document.getElementById('savedot'); if(d){d.innerHTML='<b>saved</b> '+new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});} }catch(e){} }
+function saveState(){ if(!STORE_OK)return; try{ localStorage.setItem(SKEY,JSON.stringify(STATE)); const d=document.getElementById('savedot'); if(d){d.innerHTML='<b>saved</b> '+new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});} }catch(e){} supaSave(); }
 let STATE=loadState()||structuredClone(SEED);
 let VIEW="dash";
 let BF={proj:"all",exec:"all",who:"all",q:""};
@@ -1640,6 +1643,142 @@ function saveMe(){ STATE.me=val('me-name').trim()||"Pete"; STATE.team=val('me-te
 function toggleTheme(){ DARK=!DARK; STATE.dark=DARK; applyTheme(); saveState(); if(VIEW==="gantt")requestAnimationFrame(drawDepLines); }
 function applyTheme(){ document.body.classList.toggle('dark',DARK); const b=document.getElementById('themebtn'); if(b)b.textContent=DARK?'◑ Light':'◐ Dark'; }
 
+/* ---------- SUPABASE TEAM SYNC ---------- */
+const SUPA_KEY="ptld-supa-cfg-v1";
+let SB=null,SUPA_CFG=null,_supaSaveTimer=null,_supaChannel=null;
+
+function loadSupaCfg(){try{return JSON.parse(localStorage.getItem(SUPA_KEY)||"null");}catch(e){return null;}}
+function saveSupaCfg(cfg){try{if(cfg===null)localStorage.removeItem(SUPA_KEY);else localStorage.setItem(SUPA_KEY,JSON.stringify(cfg));}catch(e){}}
+
+function initSupabase(){
+  SUPA_CFG=loadSupaCfg();
+  if(!SUPA_CFG||!SUPA_CFG.url||!SUPA_CFG.key){updateSyncDot('off');return;}
+  try{
+    SB=(typeof supabase!=='undefined'&&supabase.createClient)?supabase.createClient(SUPA_CFG.url,SUPA_CFG.key):null;
+    if(!SB){updateSyncDot('error');return;}
+    updateSyncDot('connecting');
+    supaLoad().then(()=>supaSubscribe());
+  }catch(e){console.warn('Supabase init failed',e);updateSyncDot('error');}
+}
+
+async function supaLoad(){
+  if(!SB)return;
+  try{
+    const{data,error}=await SB.from('venture_state').select('state,updated_at,updated_by').eq('id','singleton').single();
+    if(error){if(error.code!=='PGRST116')console.warn('supaLoad',error);updateSyncDot('error');return;}
+    if(!data)return;
+    const localTs=STATE._supaAt||0;
+    const remoteTs=new Date(data.updated_at).getTime();
+    if(remoteTs>localTs){
+      const r=data.state;
+      if(!r.crm)r.crm={};if(!r.time)r.time=[];if(!r.plans)r.plans={};
+      if(!r.companies)r.companies=structuredClone(SEED.companies);
+      if(!r.rates)r.rates=structuredClone(SEED.rates);
+      r.me=r.me||STATE.me;r._supaAt=remoteTs;
+      STATE=r;
+      if(STORE_OK)localStorage.setItem(SKEY,JSON.stringify(STATE));
+      DARK=!!STATE.dark;applyTheme();
+      const idb=document.getElementById('idbtn');if(idb)idb.textContent="You: "+STATE.me;
+      initSchedule();render();
+      toast('Synced from '+(data.updated_by||'team')+' · '+new Date(data.updated_at).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}));
+    }
+    updateSyncDot('ok');
+  }catch(e){console.warn('supaLoad threw',e);updateSyncDot('error');}
+}
+
+function supaSave(){
+  if(!SB)return;
+  clearTimeout(_supaSaveTimer);
+  _supaSaveTimer=setTimeout(async()=>{
+    try{
+      STATE._supaAt=Date.now();
+      const{error}=await SB.from('venture_state').upsert({id:'singleton',state:STATE,updated_at:new Date().toISOString(),updated_by:STATE.me||'unknown'});
+      if(error){console.warn('supaSave',error);updateSyncDot('error');return;}
+      updateSyncDot('ok');
+    }catch(e){console.warn('supaSave threw',e);updateSyncDot('error');}
+  },1500);
+}
+
+function supaSubscribe(){
+  if(!SB||_supaChannel)return;
+  _supaChannel=SB.channel('venture_state_changes')
+    .on('postgres_changes',{event:'UPDATE',schema:'public',table:'venture_state',filter:'id=eq.singleton'},payload=>{
+      const who=payload.new&&payload.new.updated_by;
+      if(who&&who===(STATE.me||'unknown'))return;
+      const r=payload.new&&payload.new.state;
+      if(!r)return;
+      const remoteTs=new Date((payload.new&&payload.new.updated_at)||0).getTime();
+      if(remoteTs<=(STATE._supaAt||0))return;
+      if(!r.crm)r.crm={};if(!r.time)r.time=[];if(!r.plans)r.plans={};
+      r.me=STATE.me;r._supaAt=remoteTs;
+      STATE=r;
+      if(STORE_OK)localStorage.setItem(SKEY,JSON.stringify(STATE));
+      DARK=!!STATE.dark;applyTheme();initSchedule();render();
+      toast('Live update from '+(who||'team'));updateSyncDot('ok');
+    })
+    .subscribe(status=>{
+      if(status==='SUBSCRIBED')updateSyncDot('ok');
+      else if(status==='CHANNEL_ERROR')updateSyncDot('error');
+    });
+}
+
+function updateSyncDot(state){
+  const d=document.getElementById('syncdot');if(!d)return;
+  const labels={off:'',connecting:'◌ syncing',ok:'● synced',error:'✕ sync err'};
+  const cols={off:'',connecting:'var(--yellow)',ok:'var(--green)',error:'var(--red)'};
+  d.textContent=labels[state]||'';d.style.color=cols[state]||'var(--muted)';
+}
+
+function openSyncModal(){
+  const cfg=loadSupaCfg()||{};
+  openScrim(`<div class="modal-h"><h3>Team Sync</h3><span class="x" onclick="closeModal()">✕</span></div>
+<div class="modal-b">
+<p style="font-family:'Space Mono';font-size:11px;color:var(--muted);margin-bottom:12px">Connect to Supabase for real-time shared state.<br>All team members use the same project URL and anon key.</p>
+<div class="fld two"><div><label>Supabase Project URL</label><input id="supa-url" placeholder="https://xxxx.supabase.co" value="${esc(cfg.url||'')}"></div><div><label>Anon Key (public)</label><input id="supa-key" placeholder="eyJ..." value="${esc(cfg.key||'')}"></div></div>
+<div style="margin:10px 0"><button class="btn r" onclick="saveSyncCfg()">Connect</button>${SB?' <button class="btn" onclick="disconnectSync()" style="margin-left:8px">Disconnect</button>':''}</div>
+<details style="margin-top:14px"><summary style="font-family:'Space Mono';font-size:11px;cursor:pointer;color:var(--muted)">▸ Create Supabase table (run once in SQL Editor)</summary>
+<pre style="background:var(--paper2);padding:10px;font-size:11px;overflow:auto;margin-top:6px;border:2px solid var(--hair);font-family:'Space Mono';line-height:1.5">CREATE TABLE venture_state (
+  id TEXT PRIMARY KEY,
+  state JSONB NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_by TEXT
+);
+ALTER TABLE venture_state ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "open_access" ON venture_state
+  FOR ALL USING (true) WITH CHECK (true);
+
+-- Enable Realtime:
+-- Supabase Dashboard → Database → Replication → venture_state → toggle on
+
+-- Insert the initial row (do this once):
+INSERT INTO venture_state (id, state)
+VALUES ('singleton', '{}')
+ON CONFLICT (id) DO NOTHING;</pre></details>
+<p style="font-family:'Space Mono';font-size:10px;color:var(--muted);margin-top:10px">No accounts needed. Changes sync in real time across all tabs and devices. Your identity (name) stays local.</p>
+</div>
+<div class="modal-f"><button class="btn" onclick="closeModal()">Close</button></div>`);
+}
+
+function saveSyncCfg(){
+  const url=val('supa-url').trim(),key=val('supa-key').trim();
+  if(!url||!key){toast('Enter both URL and anon key');return;}
+  saveSupaCfg({url,key});
+  if(_supaChannel&&SB)try{SB.removeChannel(_supaChannel);}catch(e){}
+  _supaChannel=null;SB=null;
+  closeModal();
+  initSupabase();
+  toast('Connecting…');
+}
+
+function disconnectSync(){
+  if(_supaChannel&&SB)try{SB.removeChannel(_supaChannel);}catch(e){}
+  _supaChannel=null;SB=null;
+  saveSupaCfg(null);
+  updateSyncDot('off');
+  closeModal();
+  toast('Disconnected from Supabase');
+}
+
 /* ---------- BOOT ---------- */
 if(!STATE.crm)STATE.crm={}; if(!STATE.time)STATE.time=[]; if(!STATE.plans)STATE.plans={}; if(!STATE.companies)STATE.companies=structuredClone(SEED.companies); if(!STATE.rates)STATE.rates=structuredClone(SEED.rates); if(!STATE.me)STATE.me="Pete"; if(!STATE.team)STATE.team=["Pete"];
 DARK=!!STATE.dark; applyTheme();
@@ -1647,5 +1786,6 @@ const idb=document.getElementById('idbtn'); if(idb)idb.textContent="You: "+STATE
 const sd=document.getElementById('savedot'); if(sd)sd.textContent=STORE_OK?'autosaving':'memory only';
 initSchedule(); renderNav(); render();
 setInterval(tickTimer,1000);
+initSupabase();
 </script>
 </body></html>
