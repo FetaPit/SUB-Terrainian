@@ -158,24 +158,47 @@ svg.deplines{position:absolute;top:0;left:0;pointer-events:none;z-index:1;overfl
 .ipick .ip.on{border-color:var(--ink);background:var(--paper2)}
 .linkbadge{font-family:'Space Mono';font-size:8px;font-weight:700;border:1.5px solid var(--blue);color:var(--blue);background:#fff;padding:1px 5px;text-decoration:none}
 .linkbadge:hover{background:var(--blue);color:#fff}
-/* ---------- DARK MODE ---------- */
-body.dark{--ink:#ffffff;--paper:#071513;--paper2:#0c1d1a;--card:#0b1a18;--hair:#1d3a36;--muted:#8fc4bb;--acc:#34f5d8;--sel:rgba(52,245,216,.14);
- background:radial-gradient(1200px 700px at 70% -10%,#0e2622 0%,#071513 55%,#050f0e 100%);background-attachment:fixed}
+/* ---------- DARK MODE — 3-colour: black / teal / dark-teal ---------- */
+/* Contrast ratios (WCAG AA min 4.5:1 normal, 3:1 large):
+   white #fff  on black  #000000  → 21:1  AAA
+   white #fff  on dteal  #0a1a18  → 17:1  AAA
+   teal  #34f5d8 on black #000000 → 15:1  AAA
+   muted #7ecdc0 on black #000000 → 11:1  AAA
+   dark  #04211d on teal  #34f5d8 → 14:1  AAA  (active nav label) */
+body.dark{
+  --ink:#ffffff;--paper:#000000;--paper2:#071513;--card:#0a1a18;
+  --hair:#0f2d28;--muted:#7ecdc0;--acc:#34f5d8;
+  --sel:rgba(52,245,216,.15);
+  background:#000000;background-attachment:fixed}
 body.dark .sdot{background:var(--card)}
 body.dark .sdot.concept{background:var(--card)}
 body.dark .b-dep{background:var(--card)}
 body.dark .convention,body.dark .fbar,body.dark .legend{background:var(--paper2)}
 body.dark .nav-btn.on{background:var(--acc);color:#04211d;border-color:var(--acc);box-shadow:0 0 0 1px var(--acc),0 0 14px rgba(52,245,216,.35)}
-body.dark .nav-btn{color:var(--ink)}
+body.dark .nav-btn{color:var(--ink);border-color:var(--hair)}
 body.dark .caret{color:var(--acc)}
 body.dark .trow.flash .lbl{animation:flashd 1.6s ease}
 @keyframes flashd{0%,100%{background:var(--card)}30%{background:rgba(52,245,216,.30)}}
-body.dark .band,body.dark .cohead{background:linear-gradient(180deg,#0e2420,#0b1a18)}
+body.dark .band,body.dark .cohead{background:var(--paper2);border-color:var(--hair)}
 body.dark .trow:hover .lbl,body.dark .ti:hover{background:var(--sel)}
 body.dark .pbar{border-color:var(--acc)}
 body.dark .repo{border-color:var(--acc);color:var(--acc)}
-body.dark .hero{background:linear-gradient(135deg,#0f2723,#0a1816);border-color:var(--acc)}
+body.dark .hero{background:var(--paper2);border-color:var(--acc);border-width:2px}
 body.dark .bar.sel,body.dark .trow.sel .lbl{outline:2px solid var(--acc)}
+body.dark .card{border-color:var(--hair)}
+body.dark .card-h{background:var(--paper2);border-color:var(--hair)}
+body.dark header{border-color:var(--hair)}
+body.dark .hbtns button{background:var(--paper2);color:var(--ink);border-color:var(--hair)}
+body.dark .hbtns button:hover{background:var(--acc);color:#04211d}
+body.dark .modal{background:var(--card);border-color:var(--hair)}
+body.dark .modal-h,body.dark .modal-f{background:var(--paper2);border-color:var(--hair)}
+body.dark input,body.dark select,body.dark textarea{background:var(--paper2);color:var(--ink);border-color:var(--hair)}
+body.dark .btn{background:var(--paper2);color:var(--ink);border-color:var(--hair)}
+body.dark .btn.r{background:var(--acc);color:#04211d;border-color:var(--acc)}
+body.dark .mini{background:var(--paper2);color:var(--ink);border-color:var(--hair)}
+body.dark .mini:hover{background:var(--acc);color:#04211d;border-color:var(--acc)}
+body.dark .coband-d{background:var(--paper2);border-color:var(--hair)}
+body.dark .dcard{border-color:var(--hair);background:var(--card)}
 .picon svg{color:var(--ink)}
 .rtrack{stroke:var(--hair)}
 svg.deplines{color:var(--ink)}
@@ -847,6 +870,9 @@ const SEED = {
     // Bauhaus 21
     {proj:"26.003", ref:"26.003_LEG_PAT_Bauhaus21Outline_PENDING_v0.1_OFFICIAL-SENSITIVE", title:"Bauhaus 21 one-pager + provisional patent outline", type:"Patent", cls:"OFFICIAL-SENSITIVE", loc:"TO BE CREATED (26.003.01)", note:"Does not exist yet. Highest IP priority."},
     {proj:"26.003", ref:"26.003_WRT_DOC_Bauhaus21Philosophy_20260520_v0.1_PUBLIC", title:"Bauhaus 21 philosophy note", type:"Doc", cls:"PUBLIC", loc:"Chat / memory", note:"Craft + tech + social purpose; counter-movement framing."},
+    {proj:"26.003", ref:"26.003_LEG_DIS_IPNoveltyClaimsB21_20260520_v1.0_OFFICIAL-SENSITIVE", title:"IP_novelty_claims.md — Bauhaus 21 novelty claims: physical artwork as cryptographic ownership anchor, CV artwork-match for legacy collections, anti-piracy by reward not restriction", type:"Disclosure", cls:"OFFICIAL-SENSITIVE", loc:"https://mail.google.com/mail/u/0/#inbox/19e4433f5898dbc6", note:"Self-addressed email timestamp 20 May 2026. Attachment: IP_novelty_claims-1.md. Single-use pressing codes for new releases; photo+CV match for legacy."},
+    {proj:"26.003", ref:"26.003_LEG_DIS_IPDisclosureVerifiedOwnership_20260520_v1.0_OFFICIAL-SENSITIVE", title:"IP_disclosure_verified_ownership.md — full verified-ownership infrastructure layer for recorded music (Bauhaus 21)", type:"Disclosure", cls:"OFFICIAL-SENSITIVE", loc:"https://mail.google.com/mail/u/0/#inbox/19e4433f5898dbc6", note:"Self-addressed email timestamp 20 May 2026. Attachment: IP_disclosure_verified_ownership-2.md. Parent app exposes verified purchases by API to user media player."},
+    {proj:"26.003", ref:"26.003_BLD_BRF_AlphaParentAppBrief_20260520_v1.0_OFFICIAL", title:"BUILD_BRIEF_alpha_parent_app.md — alpha parent app build brief for Bauhaus 21 verified-ownership infrastructure", type:"Brief", cls:"OFFICIAL", loc:"https://mail.google.com/mail/u/0/#inbox/19e4433f5898dbc6", note:"Self-addressed email timestamp 20 May 2026. Attachment: BUILD_BRIEF_alpha_parent_app-1.md. Informs 26.003.03 — build ownership anchor into SUB-Terrainian."},
     // NFT Infinite Artwork
     {proj:"26.004", ref:"26.004_WRT_DOC_NFTConcept_20260517_v0.1_OFFICIAL-SENSITIVE", title:"NFT infinite-artwork concept notes", type:"Doc", cls:"OFFICIAL-SENSITIVE", loc:"Project / chat: NFTs as verifiable ownership", note:"Spec to be written (26.004.01)."},
     // Project Redshift
@@ -874,6 +900,7 @@ const SEED = {
     {proj:"26.001", ref:"26.001_LEG_DOC_CompliancePack_PENDING_v0.1_OFFICIAL-SENSITIVE", title:"Compliance pack: privacy policy, T&Cs, financial-promotions check", type:"Doc", cls:"OFFICIAL-SENSITIVE", loc:"TO BE CREATED (26.001.15)", note:"Open banking via regulated AISP (TrueLayer/Plaid hold the FCA permission). 'Not financial advice' framing."},
     {proj:"26.001", ref:"26.001_DES_CODE_IPVaultPrototype_20260513_v0.1_OFFICIAL", title:"IP Vault tab — Bauhaus 21 isometric IP dashboard (Three.js)", type:"Code", cls:"OFFICIAL", loc:"FetaPit/Pareto- · prototypes/ip-vault/ (ip-vault.html + CLAUDE.md)", note:"Beta integration (26.001.23). Realises the Bauhaus 21 (26.003) visual layer inside Vault-It."},
     // Credentials pointer (never stored)
+    {proj:"26.013", ref:"26.013_LEG_DEC_ViceVallumIPDeclaration_20260530_v1.0_OFFICIAL-SENSITIVE", title:"Comprehensive IP and copyright ownership declaration — Vice x Vallum ecosystem (brand identity, business model, ops loop, tech assets, infrastructure sovereignty)", type:"Declaration", cls:"OFFICIAL-SENSITIVE", loc:"https://mail.google.com/mail/u/0/#inbox/19e7aa744baa199f", note:"Self-addressed email timestamp 30 May 2026. Covers Sovereign Creator Model, Sovereign Mint, append_note.sh, Inbox.md, macrodroid_blueprint.json, ptlive.design domain sovereignty. Pete Thickett sole author."},
     {proj:"26.014", ref:"26.014_RES_DOC_AutoIncomeStrategy_20260315_v1.0_OFFICIAL-SENSITIVE", title:"Automated digital-income strategy (AI training data, 4K stock video, downloads, silver scouting)", type:"Doc", cls:"OFFICIAL-SENSITIVE", loc:"Chat / memory (15 Mar)", note:"The 'infinity money glitch' = AI training-data demand."},
     {proj:"26.014", ref:"26.014_BLD_REC_SelfHostInfra_20260315_v1.0_OFFICIAL", title:"Self-host infra plan: TerraMaster F2-220 NAS, self-hosted n8n, Storj hosting", type:"Record", cls:"OFFICIAL", loc:"Local / NAS", note:"Cost-reduction + passive income routes. Figma edu (Weave/Veo/Sora), Adobe CC, Synthesia in stack."},
     {proj:"ALL", ref:"00.000_SEC_REF_Credentials_NEVER-STORED_v0_SECRET", title:"API keys, wallet seeds, passwords", type:"Reference", cls:"SECRET", loc:"VeraCrypt / password manager ONLY", note:"NEVER paste into Knox. This row is a pointer, not storage."}
