@@ -1,0 +1,1656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PT Live Design — Venture Control</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Space+Mono:wght@400;700&family=Archivo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+ --ink:#16140f;--paper:#f4efe2;--paper2:#ece5d3;--card:#fbf8ef;--hair:#d4cdb9;
+ --red:#d6402c;--blue:#1f4ed8;--yellow:#f2b705;--green:#1f9d55;--muted:#6f6857;
+ --acc:#1f4ed8;--sel:rgba(31,78,216,.10);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{font-family:'Archivo',system-ui,sans-serif;background:var(--paper);color:var(--ink);line-height:1.45;
+ background-image:linear-gradient(var(--hair) 1px,transparent 1px),linear-gradient(90deg,var(--hair) 1px,transparent 1px);
+ background-size:34px 34px;background-position:-1px -1px;padding-bottom:90px}
+.mono{font-family:'Space Mono',monospace}
+.wrap{max-width:1300px;margin:0 auto;padding:18px 16px}
+/* header */
+header{border:3px solid var(--ink);background:var(--paper);margin-bottom:16px;overflow:hidden}
+.hbar{display:flex;align-items:stretch}
+.hmark{width:54px;border-right:3px solid var(--ink);background:var(--yellow);position:relative;flex:none}
+.hmark::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 50% 30%,var(--red) 0 17%,transparent 17%),linear-gradient(var(--blue) 0 0) bottom/100% 33% no-repeat}
+.htitle{flex:1;padding:12px 16px}
+.htitle h1{font-family:'Archivo Black';font-size:clamp(18px,3vw,28px);line-height:.95;text-transform:uppercase;letter-spacing:-.5px}
+.htitle .sub{font-family:'Space Mono';font-size:10px;letter-spacing:1px;color:var(--muted);margin-top:5px;text-transform:uppercase}
+.hbtns{display:flex;gap:0;border-left:3px solid var(--ink);flex:none}
+.hbtns button{border:none;border-right:1px solid var(--hair);background:var(--paper2);font-family:'Space Mono';font-size:10px;font-weight:700;padding:0 12px;cursor:pointer;text-transform:uppercase;letter-spacing:.5px}
+.hbtns button:last-child{border-right:none}
+.hbtns button:hover{background:var(--ink);color:var(--paper)}
+/* nav */
+nav{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+.nav-btn{font-family:'Space Mono';font-size:12px;font-weight:700;border:2px solid var(--ink);background:var(--paper);padding:8px 14px;cursor:pointer;text-transform:uppercase;letter-spacing:.5px;transition:.12s}
+.nav-btn:hover{transform:translate(-1px,-1px);box-shadow:2px 2px 0 var(--ink)}
+.nav-btn.on{background:var(--ink);color:var(--paper)}
+.view{display:none}.view.on{display:block}
+/* generic card */
+.card{border:3px solid var(--ink);background:var(--card);margin-bottom:14px}
+.card-h{display:flex;align-items:center;gap:8px;padding:9px 12px;border-bottom:3px solid var(--ink);background:var(--paper2)}
+.cdot{width:14px;height:14px;border:2px solid var(--ink);flex:none}
+.card-h h3{font-family:'Archivo Black';font-size:13px;text-transform:uppercase}
+.card-h .code{font-family:'Space Mono';font-size:11px;color:var(--muted);font-weight:700}
+.card-b{padding:12px}
+.badge{font-family:'Space Mono';font-size:9px;font-weight:700;letter-spacing:.3px;padding:2px 6px;border:1.5px solid var(--ink);text-transform:uppercase;white-space:nowrap;display:inline-block}
+.b-own{background:var(--paper)}.b-dep{background:#fff;border-style:dashed;color:var(--muted)}
+.b-code{background:var(--blue);color:#fff;border-color:var(--blue)}
+a.b-gh{background:var(--ink);color:var(--paper);text-decoration:none}a.b-gh:hover{background:var(--red);border-color:var(--red)}
+.pill{font-family:'Space Mono';font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;text-transform:uppercase;letter-spacing:.3px;border:1.5px solid var(--ink)}
+.muted{color:var(--muted)}
+.row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+/* status dot */
+.sdot{width:9px;height:9px;border-radius:50%;border:1.5px solid var(--ink);flex:none;background:#fff}
+.sdot.live{background:var(--green)}.sdot.prog{background:var(--yellow)}.sdot.proto{background:var(--blue)}
+.sdot.concept{background:#fff}.sdot.input{background:var(--red)}.sdot.tbc{background:#bbb}.sdot.done{background:var(--ink)}
+/* TODAY view */
+.hero{border:3px solid var(--ink);background:#16140f;color:#f4efe2;padding:16px;margin-bottom:16px;position:relative;overflow:hidden}
+.hero .lab{font-family:'Space Mono';font-size:10px;letter-spacing:2px;color:var(--yellow);text-transform:uppercase}
+.hero h2{font-family:'Archivo Black';font-size:clamp(20px,3.6vw,30px);line-height:1.02;margin:6px 0 8px;text-transform:uppercase}
+.hero .meta{font-family:'Space Mono';font-size:11px;color:#cfc8b6}
+.hero .act{margin-top:12px}
+.btn{font-family:'Space Mono';font-size:11px;font-weight:700;border:2px solid var(--ink);background:var(--paper);color:var(--ink);padding:7px 12px;cursor:pointer;text-transform:uppercase;letter-spacing:.4px;transition:.12s}
+.btn:hover{transform:translate(-1px,-1px);box-shadow:2px 2px 0 rgba(0,0,0,.4)}
+.btn.y{background:var(--yellow)}.btn.r{background:var(--red);color:#fff;border-color:var(--red)}.btn.b{background:var(--blue);color:#fff;border-color:var(--blue)}
+.btn.ghost{background:transparent;color:var(--paper);border-color:var(--paper)}
+.tgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:12px}
+.tcard{border:3px solid var(--ink);background:var(--card);display:flex;flex-direction:column}
+.tcard .top{display:flex;align-items:center;gap:7px;padding:8px 10px;border-bottom:2px solid var(--ink)}
+.tcard .top .code{font-family:'Space Mono';font-size:10px;font-weight:700;color:var(--muted)}
+.tcard .top .nm{font-family:'Archivo Black';font-size:12px;text-transform:uppercase;letter-spacing:-.2px}
+.tcard .cold{margin-left:auto;font-family:'Space Mono';font-size:8px;font-weight:700;background:var(--red);color:#fff;padding:1px 5px;text-transform:uppercase}
+.tcard .body{padding:10px;flex:1}
+.tcard .nxlab{font-family:'Space Mono';font-size:9px;letter-spacing:1px;color:var(--red);text-transform:uppercase;font-weight:700}
+.tcard .nx{font-size:14px;font-weight:700;line-height:1.25;margin:3px 0 6px}
+.tcard .small{font-size:12px;color:var(--muted);font-style:italic;border-left:3px solid var(--yellow);padding-left:8px;margin-bottom:8px}
+.tcard .foot{display:flex;align-items:center;gap:6px;padding:8px 10px;border-top:2px solid var(--hair);flex-wrap:wrap}
+.streak{font-family:'Space Mono';font-size:10px;font-weight:700}
+.mini{font-family:'Space Mono';font-size:9px;font-weight:700;border:1.5px solid var(--ink);background:var(--paper);padding:3px 6px;cursor:pointer;text-transform:uppercase}
+.mini:hover{background:var(--ink);color:var(--paper)}
+.mini.ai{background:var(--yellow)}
+/* GANTT */
+.board{border:3px solid var(--ink);background:var(--paper);overflow-x:auto}
+.gantt{min-width:1000px;position:relative}
+.grow{display:grid;grid-template-columns:330px repeat(12,1fr);border-bottom:1px solid var(--hair)}
+.ghead{position:sticky;top:0;z-index:6;background:var(--ink)}
+.ghead .c{color:var(--paper);font-family:'Space Mono';font-size:10px;font-weight:700;padding:9px 5px;text-align:center;border-left:1px solid #3a362c}
+.ghead .lbl{position:sticky;left:0;z-index:7;background:var(--ink);text-align:left;padding-left:12px;border-left:none}
+.qy{font-size:8px;opacity:.5;display:block}
+.gsec .band{grid-column:1/-1;display:flex;align-items:center;gap:9px;padding:7px 12px;border-top:3px solid var(--ink);border-bottom:2px solid var(--ink);cursor:pointer;position:sticky;left:0}
+.band h2{font-family:'Archivo Black';font-size:12px;text-transform:uppercase}
+.band .tag{font-family:'Space Mono';font-size:9px;color:var(--muted)}
+.band .rd{margin-left:auto;font-family:'Space Mono';font-size:10px;font-weight:700}
+.lbl{position:sticky;left:0;z-index:4;background:var(--card);border-right:3px solid var(--ink);padding:7px 9px 7px 20px;display:flex;flex-direction:column;gap:4px;justify-content:center;cursor:pointer}
+.grow:nth-child(even) .lbl{background:var(--paper2)}
+.tnm{font-size:12px;font-weight:600;line-height:1.2}
+.track{grid-column:2/-1;display:grid;grid-template-columns:repeat(12,1fr);position:relative}
+.track .gc{border-left:1px solid var(--hair);min-height:42px}
+.bar{position:absolute;top:8px;height:24px;z-index:2;border:2px solid var(--ink);display:flex;align-items:center;gap:4px;padding:0 6px;font-family:'Space Mono';font-size:9px;font-weight:700;white-space:nowrap;overflow:hidden;cursor:pointer;box-shadow:2px 2px 0 rgba(0,0,0,.16)}
+.bar.hatch{background-image:repeating-linear-gradient(45deg,transparent 0 4px,rgba(0,0,0,.14) 4px 6px)}
+.bar.done{opacity:.5;text-decoration:line-through}
+.hidden{display:none!important}
+/* BOARD */
+.kanban{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}
+.kcol{border:3px solid var(--ink);background:var(--paper)}
+.kcol h4{font-family:'Space Mono';font-size:11px;font-weight:700;text-transform:uppercase;padding:8px 10px;border-bottom:3px solid var(--ink);background:var(--paper2);display:flex;justify-content:space-between}
+.kcol .kb{padding:8px;display:flex;flex-direction:column;gap:7px;min-height:60px}
+.ktask{border:2px solid var(--ink);background:var(--card);padding:7px 8px;cursor:pointer}
+.ktask .kc{font-family:'Space Mono';font-size:9px;color:var(--muted);font-weight:700}
+.ktask .kn{font-size:12px;font-weight:600;line-height:1.2;margin-top:2px}
+.ktask:hover{box-shadow:2px 2px 0 var(--ink);transform:translate(-1px,-1px)}
+/* DASHBOARD */
+.dgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+.dcard{border:3px solid var(--ink);background:var(--card);padding:12px;display:flex;flex-direction:column;gap:8px}
+.ring{display:flex;align-items:center;gap:12px}
+.ring svg{flex:none}
+.ring .rv{font-family:'Archivo Black';font-size:22px;line-height:1}
+.ring .rl{font-family:'Space Mono';font-size:9px;color:var(--muted);text-transform:uppercase}
+.dmeta{font-family:'Space Mono';font-size:10px;color:var(--muted);line-height:1.7}
+.dn{font-family:'Archivo Black';font-size:13px;text-transform:uppercase;line-height:1}
+/* icons */
+.picon{display:inline-flex;vertical-align:middle;flex:none}
+.picon svg{display:block}
+/* repo button */
+.repo{font-family:'Space Mono';font-size:9px;font-weight:700;border:1.5px solid var(--ink);background:var(--ink);color:var(--paper);padding:3px 7px;text-decoration:none;text-transform:uppercase;letter-spacing:.4px;white-space:nowrap}
+.repo:hover{background:var(--red);border-color:var(--red)}
+/* filters */
+.fbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;border:3px solid var(--ink);background:var(--paper);padding:9px 11px;margin-bottom:12px}
+.fbar .fl{font-family:'Space Mono';font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted)}
+.fbar select,.fbar input{border:2px solid var(--ink);background:var(--card);font-family:'Space Mono';font-size:11px;padding:5px 7px;font-weight:700}
+.fbar input[type=text]{min-width:120px}
+.fbar .clear{cursor:pointer;font-family:'Space Mono';font-size:10px;font-weight:700;border:2px solid var(--ink);background:var(--yellow);padding:5px 9px;text-transform:uppercase}
+/* momentum list */
+.mom{border:3px solid var(--ink);background:var(--card);margin-bottom:16px}
+.mom-h{display:flex;align-items:center;gap:8px;padding:9px 12px;border-bottom:3px solid var(--ink);background:var(--yellow)}
+.mom-h h3{font-family:'Archivo Black';font-size:13px;text-transform:uppercase}
+.mom-h .sub{font-family:'Space Mono';font-size:9px;margin-left:auto;text-transform:uppercase}
+.mrow{display:flex;align-items:center;gap:10px;padding:9px 12px;border-bottom:1px dotted var(--hair)}
+.mrow:last-child{border-bottom:none}
+.mrow:hover{background:var(--paper2)}
+.mrow .mc{font-family:'Space Mono';font-size:9px;font-weight:700;color:var(--muted);white-space:nowrap}
+.mrow .mtxt{flex:1;font-size:14px;font-weight:700;line-height:1.25}
+.mrow .mtxt small{display:block;font-family:'Space Mono';font-size:9px;font-weight:400;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-top:1px}
+.mrow .mstreak{font-family:'Space Mono';font-size:11px;font-weight:700;white-space:nowrap}
+.mrow .mbtn{font-family:'Space Mono';font-size:9px;font-weight:700;border:1.5px solid var(--ink);background:var(--paper);padding:4px 7px;cursor:pointer;text-transform:uppercase;white-space:nowrap}
+.mrow .mbtn:hover{background:var(--ink);color:var(--paper)}
+.mrow .mbtn.ai{background:var(--yellow)}
+.mrow .mbtn.done{background:var(--green);color:#fff;border-color:var(--green)}
+/* dependency overlay */
+#gwrap{position:relative}
+svg.deplines{position:absolute;top:0;left:0;pointer-events:none;z-index:1;overflow:visible}
+.linkchip{font-family:'Space Mono';font-size:8px;font-weight:700;color:var(--muted)}
+/* icon picker */
+.ipick{display:flex;flex-wrap:wrap;gap:5px}
+.ipick .ip{border:2px solid var(--hair);background:var(--card);padding:5px;cursor:pointer;border-radius:2px}
+.ipick .ip.on{border-color:var(--ink);background:var(--paper2)}
+.linkbadge{font-family:'Space Mono';font-size:8px;font-weight:700;border:1.5px solid var(--blue);color:var(--blue);background:#fff;padding:1px 5px;text-decoration:none}
+.linkbadge:hover{background:var(--blue);color:#fff}
+/* ---------- DARK MODE ---------- */
+body.dark{--ink:#ffffff;--paper:#071513;--paper2:#0c1d1a;--card:#0b1a18;--hair:#1d3a36;--muted:#8fc4bb;--acc:#34f5d8;--sel:rgba(52,245,216,.14);
+ background:radial-gradient(1200px 700px at 70% -10%,#0e2622 0%,#071513 55%,#050f0e 100%);background-attachment:fixed}
+body.dark .sdot{background:var(--card)}
+body.dark .sdot.concept{background:var(--card)}
+body.dark .b-dep{background:var(--card)}
+body.dark .convention,body.dark .fbar,body.dark .legend{background:var(--paper2)}
+body.dark .nav-btn.on{background:var(--acc);color:#04211d;border-color:var(--acc);box-shadow:0 0 0 1px var(--acc),0 0 14px rgba(52,245,216,.35)}
+body.dark .nav-btn{color:var(--ink)}
+body.dark .caret{color:var(--acc)}
+body.dark .trow.flash .lbl{animation:flashd 1.6s ease}
+@keyframes flashd{0%,100%{background:var(--card)}30%{background:rgba(52,245,216,.30)}}
+body.dark .band,body.dark .cohead{background:linear-gradient(180deg,#0e2420,#0b1a18)}
+body.dark .trow:hover .lbl,body.dark .ti:hover{background:var(--sel)}
+body.dark .pbar{border-color:var(--acc)}
+body.dark .repo{border-color:var(--acc);color:var(--acc)}
+body.dark .hero{background:linear-gradient(135deg,#0f2723,#0a1816);border-color:var(--acc)}
+body.dark .bar.sel,body.dark .trow.sel .lbl{outline:2px solid var(--acc)}
+.picon svg{color:var(--ink)}
+.rtrack{stroke:var(--hair)}
+svg.deplines{color:var(--ink)}
+.themebtn{border:none;border-right:1px solid var(--hair);background:var(--paper2);font-family:'Space Mono';font-size:10px;font-weight:700;padding:0 12px;cursor:pointer;text-transform:uppercase;letter-spacing:.5px;color:var(--ink)}
+.themebtn:hover{background:var(--ink);color:var(--paper)}
+/* present-moment subhead */
+.nowhead{font-family:'Space Mono';font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin:0 0 10px 2px}
+/* gantt collapse controls */
+.gctrls{display:flex;gap:8px;align-items:center;margin-bottom:10px}
+.caret{font-family:'Space Mono';font-size:12px;font-weight:700;width:14px;display:inline-block}
+.bandsum{font-family:'Space Mono';font-size:9px;color:var(--muted);margin-left:8px}
+/* ---------- TEAM & OPPORTUNITIES ---------- */
+.crmgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+.crmcard{border:3px solid var(--ink);background:var(--card)}
+.crmcard .ch{display:flex;align-items:center;gap:8px;padding:9px 11px;border-bottom:3px solid var(--ink);background:var(--paper2)}
+.crmcard .ch .cn{font-family:'Archivo Black';font-size:12px;text-transform:uppercase}
+.crmcard .ch .cc{font-family:'Space Mono';font-size:10px;color:var(--muted);font-weight:700}
+.crmcard .cb{padding:10px 11px}
+.seclab{font-family:'Space Mono';font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin:4px 0 6px;display:flex;align-items:center;gap:6px}
+.seclab .add{margin-left:auto;cursor:pointer;border:1.5px solid var(--ink);background:var(--paper);padding:2px 6px;font-size:9px;font-weight:700;color:var(--ink)}
+.seclab .add:hover{background:var(--ink);color:var(--paper)}
+.tchip{display:inline-flex;align-items:center;gap:6px;border:2px solid var(--ink);background:var(--paper);padding:4px 8px;margin:0 5px 5px 0;font-size:12px;cursor:pointer}
+.tchip .tr{font-family:'Space Mono';font-size:9px;color:var(--muted)}
+.tchip:hover{background:var(--paper2)}
+.opp{border:2px solid var(--ink);background:var(--paper);padding:7px 9px;margin-bottom:6px;cursor:pointer}
+.opp:hover{background:var(--paper2)}
+.opp .ot{font-size:13px;font-weight:700;line-height:1.2}
+.opp .om{display:flex;align-items:center;gap:6px;margin-top:4px;flex-wrap:wrap}
+.opp .on{font-size:11px;color:var(--muted);margin-top:3px}
+.kind{font-family:'Space Mono';font-size:8px;font-weight:700;border:1.5px solid var(--ink);padding:1px 5px;text-transform:uppercase}
+.spill{font-family:'Space Mono';font-size:8px;font-weight:700;padding:1px 6px;border:1.5px solid var(--ink);text-transform:uppercase}
+.spill.Lead{background:var(--paper)}
+.spill.Applied{background:var(--yellow)}
+.spill.Active{background:var(--blue);color:#fff;border-color:var(--blue)}
+.spill.Won{background:var(--green);color:#fff;border-color:var(--green)}
+.spill.Lost{background:var(--red);color:#fff;border-color:var(--red)}
+.crmempty{font-size:11px;color:var(--muted);font-style:italic;padding:2px 0 6px}
+/* ---------- IDENTITY + SAVE STATE (header) ---------- */
+.idpill{display:flex;align-items:center;border-left:3px solid var(--ink)}
+.idpill button{border:none;background:var(--paper2);font-family:'Space Mono';font-size:10px;font-weight:700;padding:0 12px;height:100%;cursor:pointer;text-transform:uppercase;letter-spacing:.5px;color:var(--ink)}
+.idpill button:hover{background:var(--ink);color:var(--paper)}
+.savedot{font-family:'Space Mono';font-size:9px;color:var(--muted);padding:0 10px;display:flex;align-items:center;gap:5px;border-left:1px solid var(--hair)}
+.savedot b{color:var(--green)}
+/* ---------- TIMER BAR (fixed bottom) ---------- */
+.timebar{position:fixed;left:0;right:0;bottom:0;height:54px;background:var(--ink);color:var(--paper);display:flex;align-items:center;gap:12px;padding:0 14px;z-index:40;border-top:3px solid var(--yellow)}
+.timebar .live{font-family:'Space Mono';font-size:20px;font-weight:700;letter-spacing:1px}
+.timebar .ctx{font-family:'Space Mono';font-size:11px;color:#cfc8b6;flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.timebar .val{font-family:'Archivo Black';font-size:16px;color:var(--yellow)}
+.pulse{width:11px;height:11px;border-radius:50%;background:var(--red);flex:none;animation:pl 1.1s infinite}
+@keyframes pl{0%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.8)}100%{opacity:1;transform:scale(1)}}
+.tbtn{font-family:'Space Mono';font-size:11px;font-weight:700;border:2px solid var(--paper);background:transparent;color:var(--paper);padding:7px 12px;cursor:pointer;text-transform:uppercase;letter-spacing:.4px;flex:none}
+.tbtn:hover{background:var(--paper);color:var(--ink)}
+.tbtn.in{background:var(--yellow);color:var(--ink);border-color:var(--yellow)}
+.tbtn.out{background:var(--red);color:#fff;border-color:var(--red)}
+/* ---------- TIME VIEW ---------- */
+.tsum{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
+.tsum .s{border:3px solid var(--ink);background:var(--card);padding:11px}
+.tsum .s .v{font-family:'Archivo Black';font-size:22px;line-height:1}
+.tsum .s .l{font-family:'Space Mono';font-size:9px;text-transform:uppercase;color:var(--muted);margin-top:3px;letter-spacing:.5px}
+.ratecard{border:3px solid var(--ink);background:var(--card);margin-bottom:14px}
+.ratecard .rr{display:flex;align-items:center;gap:8px;padding:6px 11px;border-bottom:1px dotted var(--hair)}
+.ratecard .rr input.sk{flex:1;border:1.5px solid var(--hair);background:var(--paper);padding:5px 7px;font-family:'Archivo';font-size:13px}
+.ratecard .rr input.rt{width:90px;border:1.5px solid var(--hair);background:var(--paper);padding:5px 7px;font-family:'Space Mono';font-size:13px;font-weight:700}
+.ratecard .rr .gbp{font-family:'Space Mono';font-weight:700}
+.proj-roll{width:100%;border-collapse:collapse}
+.proj-roll td,.proj-roll th{padding:7px 9px;border-bottom:1px solid var(--hair);font-size:12px;text-align:left}
+.proj-roll th{font-family:'Space Mono';font-size:9px;text-transform:uppercase;background:var(--ink);color:var(--paper)}
+.proj-roll td.num{font-family:'Space Mono';font-weight:700;text-align:right}
+.billdot{width:8px;height:8px;border-radius:50%;display:inline-block;border:1.5px solid var(--ink)}
+.billdot.y{background:var(--green)}.billdot.n{background:var(--paper)}
+/* ---------- PROGRESS / DATA-VIZ ---------- */
+.pbar{height:7px;background:var(--hair);border:1.5px solid var(--ink);position:relative;overflow:hidden;min-width:80px}
+.pbar i{position:absolute;left:0;top:0;bottom:0;background:repeating-linear-gradient(45deg,currentColor 0 6px,transparent 6px 10px),var(--c);display:block}
+.pwrap{display:flex;align-items:center;gap:8px}
+.pwrap .pn{font-family:'Space Mono';font-size:10px;font-weight:700;white-space:nowrap}
+.nextlink{font-family:'Space Mono';font-size:10px;font-weight:700;color:var(--acc);cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+.nextlink:hover{color:var(--red)}
+.bandprog{grid-column:1/-1;display:flex;align-items:center;gap:10px;padding:5px 12px 7px 34px;border-bottom:2px solid var(--ink);background:var(--card)}
+.plink{cursor:pointer}
+.plink:hover{opacity:.7}
+/* flash highlight on jump-to-task */
+@keyframes flash{0%,100%{background:var(--card)}30%{background:var(--yellow)}}
+.trow.flash .lbl{animation:flash 1.6s ease}
+/* ---------- PROFILE PAGE ---------- */
+.profback{font-family:'Space Mono';font-size:11px;font-weight:700;border:2px solid var(--ink);background:var(--paper);padding:6px 12px;cursor:pointer;text-transform:uppercase;margin-bottom:12px;display:inline-block}
+.profback:hover{background:var(--ink);color:var(--paper)}
+.profhero{border:3px solid var(--ink);background:var(--card);padding:14px;margin-bottom:14px;border-top-width:7px}
+.profhero .pt{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.profhero h2{font-family:'Archivo Black';font-size:clamp(18px,3vw,26px);text-transform:uppercase;line-height:1}
+.profhero .meta{font-family:'Space Mono';font-size:11px;color:var(--muted);margin-top:8px;line-height:1.8}
+.profhero .one{font-size:14px;margin-top:8px;max-width:760px}
+.profgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin-bottom:14px}
+.psec{border:3px solid var(--ink);background:var(--card)}
+.psec .ph{display:flex;align-items:center;gap:8px;padding:9px 12px;border-bottom:3px solid var(--ink);background:var(--paper2)}
+.psec .ph h3{font-family:'Archivo Black';font-size:12px;text-transform:uppercase}
+.psec .ph .cnt{font-family:'Space Mono';font-size:10px;color:var(--muted);margin-left:auto}
+.psec .pbody{padding:11px}
+.frow{display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-bottom:1px dotted var(--hair);font-size:13px}
+.frow .k{font-family:'Space Mono';font-size:10px;color:var(--muted);text-transform:uppercase}
+.tlist .ti{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px dotted var(--hair);cursor:pointer;font-size:13px}
+.tlist .ti:hover{color:var(--blue)}
+.tlist .ti .tc{font-family:'Space Mono';font-size:9px;color:var(--muted);white-space:nowrap}
+/* ---------- BUSINESS PLAN ---------- */
+.plan{border:3px solid var(--ink);background:var(--card);margin-bottom:14px}
+.plan .ph{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:3px solid var(--ink);background:var(--ink);color:var(--paper)}
+.plan .ph h3{font-family:'Archivo Black';font-size:13px;text-transform:uppercase;flex:1}
+.plan .pbody{padding:12px}
+.planfld{margin-bottom:12px}
+.planfld label{font-family:'Space Mono';font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);display:block;margin-bottom:4px}
+.planfld label .hint{color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0}
+.planfld textarea{width:100%;border:2px solid var(--ink);background:var(--paper);padding:8px 10px;font-family:'Archivo';font-size:13px;line-height:1.5;resize:vertical;min-height:56px}
+.planexport{display:flex;gap:8px;flex-wrap:wrap;padding:0 12px 12px}
+.guidetag{font-family:'Space Mono';font-size:9px;color:var(--muted);padding:0 12px 10px}
+/* ---------- MICRO TASKS (board) ---------- */
+.ktask.micro{border-style:dashed;background:var(--paper2);padding:5px 7px;margin-left:10px}
+.ktask.micro .kn{font-size:11px;font-weight:600}
+.ktask.micro .mp{font-family:'Space Mono';font-size:8px;color:var(--muted)}
+.microtoggle{display:flex;align-items:center;gap:5px;font-family:'Space Mono';font-size:10px;font-weight:700}
+/* ---------- generic section collapse ---------- */
+.sechide{display:none!important}
+.cclick{cursor:pointer}
+@media print{
+ body *{visibility:hidden}
+ #printplan,#printplan *{visibility:visible}
+ #printplan{position:absolute;left:0;top:0;width:100%;padding:20px}
+ .timebar,nav,header{display:none!important}
+}
+/* ---------- PARENT COMPANY ---------- */
+.cohead{grid-column:1/-1;display:flex;align-items:center;gap:10px;padding:11px 14px;background:var(--ink);color:var(--paper);border-bottom:3px solid var(--ink);cursor:pointer;position:sticky;left:0}
+.cohead .con{font-family:'Archivo Black';font-size:15px;text-transform:uppercase;letter-spacing:.5px}
+.cohead .cometa{font-family:'Space Mono';font-size:10px;opacity:.8}
+.cohead .caret{color:var(--paper)}
+body.dark .cohead{background:linear-gradient(180deg,#103029,#0a1d1a);color:var(--ink);border-color:var(--acc)}
+body.dark .cohead .caret{color:var(--acc)}
+.cobar{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;padding:8px 14px;background:var(--paper2);border-bottom:2px solid var(--ink);font-family:'Space Mono';font-size:10px}
+.cobar b{font-family:'Archivo';font-weight:700}
+.cochip{display:inline-flex;align-items:center;gap:4px;border:1.5px solid var(--ink);padding:2px 7px;background:var(--card);font-weight:700}
+.parenttag{display:inline-flex;align-items:center;gap:4px;font-family:'Space Mono';font-size:9px;font-weight:700;text-transform:uppercase;border:1.5px solid var(--acc);color:var(--acc);padding:1px 6px;cursor:pointer;border-radius:2px}
+.parenttag:hover{background:var(--acc);color:var(--paper)}
+.cogroup{border:3px solid var(--ink);margin-bottom:16px;background:var(--card)}
+.coband-d{display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--ink);color:var(--paper);cursor:pointer}
+body.dark .coband-d{background:linear-gradient(180deg,#103029,#0a1d1a);color:var(--ink);box-shadow:inset 0 0 0 1px var(--acc)}
+body.dark .coband-d .add{border-color:var(--acc);color:var(--acc)}
+.coband-d .con{font-family:'Archivo Black';font-size:16px;text-transform:uppercase;flex:1}
+.coband-d .add{font-family:'Space Mono';font-size:10px;border:1.5px solid var(--paper);padding:3px 8px;background:transparent;color:var(--paper);cursor:pointer}
+.codet{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;padding:10px 14px;background:var(--paper2);border-bottom:2px solid var(--ink)}
+.codet .d .l{font-family:'Space Mono';font-size:9px;text-transform:uppercase;color:var(--muted)}
+.codet .d .v{font-family:'Archivo';font-weight:700;font-size:13px}
+/* Now: most important micro task */
+.micrline{display:flex;align-items:center;gap:6px;margin-top:3px;padding-left:30px}
+.micrline .ml{font-family:'Space Mono';font-size:9px;color:var(--muted);text-transform:uppercase;flex:none}
+.micrline .mv{font-size:12px;color:var(--acc);cursor:pointer;text-decoration:underline;text-underline-offset:2px;font-weight:700}
+.nowdash-h{font-family:'Archivo Black';font-size:15px;text-transform:uppercase;margin:18px 0 8px;padding-bottom:5px;border-bottom:3px solid var(--ink);display:flex;align-items:center;gap:8px}
+/* draggable bar affordances */
+.bar.draggable{touch-action:none}
+.bar .gripL,.bar .gripR{position:absolute;top:0;bottom:0;width:11px;cursor:ew-resize}
+.bar .gripL{left:0;border-left:3px solid rgba(0,0,0,.35)}
+.bar .gripR{right:0;border-right:3px solid rgba(0,0,0,.35)}
+.bar.dragging{box-shadow:0 0 0 2px var(--acc),3px 3px 0 rgba(0,0,0,.25);z-index:5}
+.draghint{font-family:'Space Mono';font-size:10px;color:var(--muted)}
+/* KNOX */
+.knox-h{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
+.ktable{border:3px solid var(--ink);background:var(--card);overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:760px}
+th{font-family:'Space Mono';font-size:9px;text-transform:uppercase;letter-spacing:.5px;background:var(--ink);color:var(--paper);padding:8px;text-align:left;position:sticky;top:0}
+td{padding:8px;border-bottom:1px solid var(--hair);font-size:12px;vertical-align:top}
+td.ref{font-family:'Space Mono';font-size:10px;color:var(--muted);white-space:nowrap}
+tr:hover td{background:var(--paper2)}
+.cls{font-family:'Space Mono';font-size:8px;font-weight:700;padding:2px 5px;border:1.5px solid var(--ink);white-space:nowrap}
+.cls.PUBLIC{background:var(--green);color:#fff;border-color:var(--green)}
+.cls.OFFICIAL{background:var(--paper)}
+.cls\.OS{background:var(--yellow)}
+.cls.SECRET{background:var(--red);color:#fff;border-color:var(--red)}
+.convention{border:3px solid var(--ink);background:var(--paper2);padding:12px;margin-bottom:12px;font-family:'Space Mono';font-size:11px;line-height:1.7}
+.convention b{color:var(--ink)}
+.convention .ex{background:var(--ink);color:var(--paper);padding:2px 6px;display:inline-block;margin:2px 0}
+/* modal */
+.scrim{position:fixed;inset:0;background:rgba(22,20,15,.6);display:none;align-items:flex-start;justify-content:center;z-index:50;padding:20px;overflow-y:auto}
+.scrim.on{display:flex}
+.modal{border:3px solid var(--ink);background:var(--paper);max-width:560px;width:100%;margin-top:20px}
+.modal-h{display:flex;align-items:center;gap:8px;padding:11px 14px;border-bottom:3px solid var(--ink);background:var(--ink);color:var(--paper)}
+.modal-h h3{font-family:'Archivo Black';font-size:14px;text-transform:uppercase;flex:1}
+.modal-h .x{cursor:pointer;font-family:'Space Mono';font-weight:700;font-size:18px}
+.modal-b{padding:14px;max-height:65vh;overflow-y:auto}
+.fld{margin-bottom:11px}
+.fld label{font-family:'Space Mono';font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);display:block;margin-bottom:4px}
+.fld input,.fld select,.fld textarea{width:100%;border:2px solid var(--ink);background:var(--card);padding:7px 9px;font-family:'Archivo';font-size:13px}
+.fld textarea{resize:vertical;min-height:54px}
+.fld.two{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.subrow{display:flex;gap:6px;align-items:center;margin-bottom:5px}
+.subrow input[type=text]{flex:1}
+.subrow input[type=date]{width:135px}
+.subrow .del{cursor:pointer;color:var(--red);font-weight:700;font-family:'Space Mono';border:1.5px solid var(--red);padding:3px 7px;background:#fff}
+.modal-f{display:flex;gap:8px;padding:12px 14px;border-top:3px solid var(--ink);flex-wrap:wrap}
+.range{display:flex;align-items:center;gap:8px}
+.range input{flex:1}
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--paper);font-family:'Space Mono';font-size:11px;padding:10px 16px;border:2px solid var(--yellow);z-index:99;opacity:0;transition:.2s;pointer-events:none}
+.toast.on{opacity:1}
+/* footer key */
+.legend{border:3px solid var(--ink);background:var(--paper);padding:11px 14px;margin-top:14px;display:flex;flex-wrap:wrap;gap:14px;align-items:center;font-family:'Space Mono';font-size:10px}
+.legend .li{display:flex;align-items:center;gap:5px}
+.foot{margin-top:12px;font-family:'Space Mono';font-size:10px;color:var(--muted);line-height:1.7}
+.foot b{color:var(--ink)}
+@media(max-width:640px){.hbtns{flex-wrap:wrap}.tgrid{grid-template-columns:1fr}.fld.two{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="toast" id="toast"></div>
+<div class="wrap">
+<header>
+ <div class="hbar">
+  <div class="hmark"></div>
+  <div class="htitle"><h1>Venture Control</h1><div class="sub">PT Live Design · 16 ventures · year-started numbering 26·0PP</div></div>
+  <div class="hbtns">
+   <button class="themebtn" id="themebtn" onclick="toggleTheme()">◐ Dark</button>
+   <button onclick="doExport()">Export</button>
+   <button onclick="document.getElementById('imp').click()">Import</button>
+  </div>
+  <div class="idpill"><button id="idbtn" onclick="changeMe()">You: Pete</button><span class="savedot" id="savedot">memory</span></div>
+ </div>
+</header>
+<input type="file" id="imp" accept="application/json" style="display:none" onchange="doImport(event)">
+<nav id="nav"></nav>
+<div id="app"></div>
+<div class="foot" id="foot"></div>
+</div>
+<div class="scrim" id="scrim"><div class="modal" id="modal"></div></div>
+<div class="timebar" id="timebar"></div>
+<script>
+// ============================================================
+//  PT LIVE DESIGN — VENTURE CONTROL  ·  SEED DATA
+//  Year-started numbering (26.0PP). Sub-projects: 26.0PP.NN
+// ============================================================
+
+const SEED = {
+  meta: { version: "1.0", built: "2026-05-31", owner: "Pete Thickett / PT Live Design" },
+
+  // Codified taxonomies (single controlled glossary — JSP 441 principle)
+  projectTypes: ["Software","Hardware","IP","Creative","Service","Research","Platform","Career"],
+  execTypes:    ["Build","Design","Writing","Legal","Marketing","Partnership","Admin","Research","Finance"],
+  pubStages:    ["Concept","Pre-Alpha","Alpha","Beta","RC","Live"],   // RC = release candidate
+  statuses:     ["Live","In progress","Prototype","Concept","Needs input","Scope TBC","Done"],
+  classes:      ["PUBLIC","OFFICIAL","OFFICIAL-SENSITIVE","SECRET"],  // SECRET = reference only, never stored
+  oppKinds:     ["Partner","Client","Grant","Tester","Press","Revenue","Community","Hire"],
+  oppStatuses:  ["Lead","Applied","Active","Won","Lost"],
+
+  me: "Pete",
+  team: ["Pete"],
+  rates: [
+    {skill:"Creative Direction", rate:95},
+    {skill:"Strategy / Discovery", rate:90},
+    {skill:"AI / Automation", rate:85},
+    {skill:"Motion / Animation", rate:80},
+    {skill:"Brand & Identity", rate:75},
+    {skill:"UI/UX Design", rate:75},
+    {skill:"Multimedia / Exhibition", rate:75},
+    {skill:"Front-End Build", rate:70},
+    {skill:"Production / Admin", rate:45}
+  ],
+  time: [],
+  plans: {},
+  companies: [
+    {id:"ptld", name:"PT Live Design", short:"PTLD", color:"#d6402c", icon:"grid",
+     type:"Independent multimedia & brand studio", funded:"Bootstrapped", state:"Trading",
+     partners:[], freelancers:[], staff:["Pete"],
+     note:"Parent studio. Vault-It, SUB-Terrainian, PT Live Design studio, Live Fintech/FFHF, Daijisho, Plaza Futura, Shiba After Dark, Career/FLA, Vallum x Vice, Infinite Value Glitch, PhoenixOS, OP MASSIVE — 12 of 16 ventures."},
+    {id:"redshift", name:"Project Redshift", short:"RDSH", color:"#db2777", icon:"star",
+     type:"Recording artist project", funded:"Self-funded", state:"Live",
+     partners:[], freelancers:[], staff:["Pete"],
+     note:"Music project. Four singles live with international airplay on Planet Rock, Hard Rock Hell, BBC Lincolnshire. NFT Infinite Artwork (26.004) mints against Redshift releases."},
+    {id:"petet", name:"PeTe T Solo Artist", short:"PeTe", color:"#334155", icon:"hub",
+     type:"Solo artist and designer brand", funded:"Self-funded", state:"In progress",
+     partners:[], freelancers:[], staff:["Pete"],
+     note:"Centralised creative hub for Pete Thickett as a working designer and recording artist. Funnels client commissions and music discovery."},
+    {id:"bauhaus21", name:"Bauhaus 21", short:"B21", color:"#ea580c", icon:"bauhaus",
+     type:"IP and patent venture", funded:"Self-funded", state:"Concept",
+     partners:[], freelancers:[], staff:["Pete"],
+     note:"Patentable mechanism linking a physical record to its digital files, with album artwork acting as copyright and licence verification. Highest IP priority."}
+  ],
+
+  projects: [
+    {
+      code:"26.001", name:"Vault-It", type:"Software", icon:"vault",
+      one:"Debt-to-ownership app: open finance engine plus a Claude thesis layer and an isometric house you build as your net worth grows. Release ladder: Pre-Alpha to Alpha (33 testers) to Beta (99 testers) to launch on all app stores.",
+      color:"#1f4ed8", deadline:"2027-01-31", readiness:60, pub:"Pre-Alpha", status:"In progress",
+      touched:"2026-05-31", streak:4, github:"https://github.com/FetaPit/Pareto-",
+      source:"Claude Code: Synthesize & publish Vault-It · primary focus",
+      smallest:"Open the repo and rename the HTML <title> from PurposeOS to Vault-It.",
+      tasks:[
+        {code:"26.001.01", name:"[PRE-ALPHA] Clear build blockers", exec:"Build", status:"In progress", deadline:"2026-06-10", who:"Claude Code", deps:[], subs:[
+          {n:"Rename title PurposeOS → Vault-It", d:"2026-06-03", done:false},
+          {n:"Upgrade Three.js 0.128 → 0.158", d:"2026-06-06", done:false},
+          {n:"Add Stocks tab (FFHF spec assumes it)", d:"2026-06-09", done:false}]},
+        {code:"26.001.02", name:"[PRE-ALPHA] Ship Journey Map module", exec:"Build", status:"In progress", deadline:"2026-06-15", who:"Claude Code", deps:["26.001.01"], subs:[
+          {n:"Stage 0–6 timeline component", d:"2026-06-11", done:false},
+          {n:"Keys-in-hand date calc", d:"2026-06-15", done:false}]},
+        {code:"26.001.03", name:"[PRE-ALPHA] Register data API keys", exec:"Admin", status:"Concept", deadline:"2026-06-12", who:"Pete", deps:[], subs:[
+          {n:"GoldAPI.io free key", d:"2026-06-11", done:false},
+          {n:"Alpha Vantage free key", d:"2026-06-12", done:false}]},
+        {code:"26.001.04", name:"[PRE-ALPHA] Deploy to GitHub Pages + mobile test", exec:"Build", status:"Concept", deadline:"2026-06-22", who:"Claude Code", deps:["26.001.02","26.001.03"], subs:[
+          {n:"Mobile test via local server", d:"2026-06-20", done:false},
+          {n:"Push + enable Pages", d:"2026-06-22", done:false}]},
+        {code:"26.001.05", name:"[PRE-ALPHA] Self-dogfood 2 weeks, fix top issues", exec:"Build", status:"Concept", deadline:"2026-06-30", who:"Pete", deps:["26.001.04"], subs:[
+          {n:"Daily use, log every snag", d:"2026-06-28", done:false},
+          {n:"Fix top 10 issues", d:"2026-06-30", done:false}]},
+
+        {code:"26.001.06", name:"[ALPHA·33] Accounts + cloud sync (auth)", exec:"Build", status:"Concept", deadline:"2026-07-15", who:"Claude Code", deps:["26.001.05"], subs:[
+          {n:"Supabase auth", d:"2026-07-08", done:false},
+          {n:"Per-user data store", d:"2026-07-15", done:false}]},
+        {code:"26.001.07", name:"[ALPHA·33] In-app feedback + bug capture", exec:"Build", status:"Concept", deadline:"2026-07-18", who:"Claude Code", deps:["26.001.06"], subs:[]},
+        {code:"26.001.08", name:"[ALPHA·33] Recruit 33 alpha testers", exec:"Marketing", status:"Concept", deadline:"2026-07-20", who:"Pete", deps:["26.001.05"], subs:[
+          {n:"Tester sign-up form + expectations note", d:"2026-07-10", done:false},
+          {n:"Pick 33 from r/UKInvesting, T212, network", d:"2026-07-20", done:false}]},
+        {code:"26.001.09", name:"[ALPHA·33] Run closed alpha + weekly iterate", exec:"Build", status:"Concept", deadline:"2026-08-25", who:"Pete", deps:["26.001.06","26.001.07","26.001.08"], subs:[
+          {n:"Weekly build + changelog to testers", d:"2026-08-01", done:false},
+          {n:"Triage feedback into backlog", d:"2026-08-20", done:false}]},
+        {code:"26.001.10", name:"[ALPHA·33] Alpha exit review — stability gate", exec:"Research", status:"Concept", deadline:"2026-08-31", who:"Pete", deps:["26.001.09"], subs:[
+          {n:"Crash-free + core loop holds before Beta", d:"2026-08-31", done:false}]},
+
+        {code:"26.001.11", name:"[BETA·99] React rebuild for scale", exec:"Build", status:"Concept", deadline:"2026-09-30", who:"Claude Code", deps:["26.001.10"], subs:[
+          {n:"React 18 + Vite + R3F scaffold", d:"2026-09-10", done:false},
+          {n:"Port isometric house + tabs", d:"2026-09-22", done:false},
+          {n:"Zustand → Supabase", d:"2026-09-30", done:false}]},
+        {code:"26.001.12", name:"[BETA·99] Open banking via regulated AISP", exec:"Build", status:"Concept", deadline:"2026-10-15", who:"Claude Code", deps:["26.001.11"], subs:[
+          {n:"Integrate TrueLayer/Plaid (they hold the FCA AISP permission)", d:"2026-10-08", done:false},
+          {n:"Consent + account-link flow", d:"2026-10-15", done:false}]},
+        {code:"26.001.13", name:"[BETA·99] Monetisation tiers live (Stripe)", exec:"Finance", status:"Concept", deadline:"2026-10-15", who:"Pete", deps:["26.001.11"], subs:[
+          {n:"Free / Founder £5 / Pro £15", d:"2026-10-12", done:false},
+          {n:"Founder offer locked for the 33 + 99 testers", d:"2026-10-15", done:false}]},
+        {code:"26.001.14", name:"[BETA·99] Scale to 99 testers", exec:"Marketing", status:"Concept", deadline:"2026-10-20", who:"Pete", deps:["26.001.10"], subs:[
+          {n:"Open waitlist, invite to 99", d:"2026-10-20", done:false}]},
+        {code:"26.001.15", name:"[BETA·99] Compliance + legal pack", exec:"Legal", status:"Concept", deadline:"2026-10-31", who:"Pete", deps:["26.001.12"], subs:[
+          {n:"Privacy policy + T&Cs + GDPR basis", d:"2026-10-25", done:false},
+          {n:"Financial-promotions check + 'not advice' framing", d:"2026-10-31", done:false}]},
+        {code:"26.001.16", name:"[BETA·99] Run beta + analytics + iterate", exec:"Build", status:"Concept", deadline:"2026-11-25", who:"Pete", deps:["26.001.12","26.001.13","26.001.14"], subs:[
+          {n:"Wire analytics + funnel", d:"2026-11-05", done:false},
+          {n:"Convert Founder upgrades", d:"2026-11-20", done:false}]},
+        {code:"26.001.17", name:"[BETA·99] Beta exit review — launch gate", exec:"Research", status:"Concept", deadline:"2026-11-30", who:"Pete", deps:["26.001.16","26.001.15"], subs:[
+          {n:"Retention + payment + stability thresholds met", d:"2026-11-30", done:false}]},
+
+        {code:"26.001.18", name:"[LAUNCH] Wrap as native apps (iOS + Android)", exec:"Build", status:"Concept", deadline:"2026-12-20", who:"Claude Code", deps:["26.001.17"], subs:[
+          {n:"Capacitor wrap + native shell", d:"2026-12-12", done:false},
+          {n:"Push notifications + deep links", d:"2026-12-20", done:false}]},
+        {code:"26.001.19", name:"[LAUNCH] Store assets + listings (ASO)", exec:"Design", status:"Concept", deadline:"2026-12-20", who:"Pete", deps:["26.001.17"], subs:[
+          {n:"Icon, screenshots, preview video", d:"2026-12-14", done:false},
+          {n:"Listing copy + keywords", d:"2026-12-20", done:false}]},
+        {code:"26.001.20", name:"[LAUNCH] Submit to all app stores", exec:"Admin", status:"Concept", deadline:"2027-01-15", who:"Pete", deps:["26.001.18","26.001.19"], subs:[
+          {n:"Apple App Store review", d:"2027-01-10", done:false},
+          {n:"Google Play review", d:"2027-01-10", done:false},
+          {n:"Web PWA install path", d:"2027-01-15", done:false}]},
+        {code:"26.001.21", name:"[LAUNCH] Public launch campaign", exec:"Marketing", status:"Concept", deadline:"2027-01-31", who:"Pete", deps:["26.001.20"], subs:[
+          {n:"Launch post + tester testimonials", d:"2027-01-28", done:false},
+          {n:"Product Hunt / press / communities", d:"2027-01-31", done:false}]},
+        {code:"26.001.22", name:"[LAUNCH] Post-launch support + v1.1 roadmap", exec:"Admin", status:"Concept", deadline:"2027-02-28", who:"Pete", deps:["26.001.21"], subs:[]},
+        {code:"26.001.23", name:"[BETA·99] Integrate IP Vault tab (Bauhaus 21 visualiser)", exec:"Build", status:"Prototype", deadline:"2026-10-31", who:"Claude Code", deps:["26.001.11"], subs:[
+          {n:"Match Three.js version to house visualiser", d:"2026-10-20", done:false},
+          {n:"Wire prototypes/ip-vault → live tab", d:"2026-10-31", done:false}]}
+      ]
+    },
+    {
+      code:"26.002", name:"SUB-Terrainian", type:"Software", icon:"vinyl",
+      one:"On-device discography builder + Web3 ownership layer: MusicBrainz-anchored metadata, synced lyrics, album art, soulbound physical proof + limited-edition NFTs on Base. Android-first (Termux) with an installable Flask PWA dashboard.",
+      color:"#7c3aed", deadline:"2026-12-31", readiness:70, pub:"Alpha", status:"In progress",
+      touched:"2026-06-05", streak:2, github:"https://github.com/FetaPit/SUB-Terrainian",
+      source:"Claude Code: Project handover + music industry advice · branch: claude/project-handover-music-advice-0zVQ0",
+      smallest:"Recover fetch_v3.py from Termux → paste into artwork/fetch.py → commit. This unblocks the full pipeline.",
+      tasks:[
+        {code:"26.002.01", name:"[DONE] Sprint 1 — Base smart contracts", exec:"Build", status:"Done", deadline:"2026-05-31", who:"Claude Code", deps:[], link:"https://github.com/FetaPit/SUB-Terrainian", subs:[
+          {n:"MusicEdition.sol — ERC-1155 + EIP-2981 limited editions", d:"2026-05-31", done:true},
+          {n:"PhysicalClaim.sol — EIP-5192 soulbound proof-of-ownership", d:"2026-05-31", done:true},
+          {n:"Foundry tests (23 total) + deploy script + REMIX_DEPLOY.md (Android browser deploy guide)", d:"2026-05-31", done:true}]},
+        {code:"26.002.02", name:"[DONE] Sprint 2 — Full 4-phase pipeline + Flask PWA", exec:"Build", status:"Done", deadline:"2026-06-03", who:"Claude Code", deps:["26.002.01"], link:"https://github.com/FetaPit/SUB-Terrainian", subs:[
+          {n:"db/manifest.py — SQLite schema + idempotent upserts for all phases", d:"2026-06-03", done:true},
+          {n:"metadata/ artwork/ portraits/ lyrics/ — all 4 enrichment phases built", d:"2026-06-03", done:true},
+          {n:"chain/flask_app.py — mobile-first dark PWA + SSE real-time pipeline runner", d:"2026-06-03", done:true},
+          {n:"sub_terrainian.py — CLI orchestrator (scan/art/port/lyr/emit/sync/serve)", d:"2026-06-03", done:true},
+          {n:"MediaStore sync via termux-media-scan (Samsung Music + Musicolet + Poweramp)", d:"2026-06-03", done:true}]},
+        {code:"26.002.03", name:"[DONE] Sprint 3 — PWA install + Settings page + Auto-open", exec:"Build", status:"Done", deadline:"2026-06-05", who:"Claude Code", deps:["26.002.02"], link:"https://github.com/FetaPit/SUB-Terrainian", subs:[
+          {n:"/manifest.json + /sw.js + /icon/<size> — Add to Home Screen ready", d:"2026-06-05", done:true},
+          {n:"/settings page — configure music path, API keys, contracts from browser", d:"2026-06-05", done:true},
+          {n:"Auto-open browser 1.5s after serve (termux-open-url → webbrowser fallback)", d:"2026-06-05", done:true}]},
+        {code:"26.002.04", name:"[DONE] PoC — demo runner + Musicolet outreach doc", exec:"Partnership", status:"Done", deadline:"2026-06-05", who:"Claude Code", deps:["26.002.02"], link:"https://github.com/FetaPit/SUB-Terrainian", subs:[
+          {n:"poc/demo.py — sample pipeline run + player compat coverage report + JSON output", d:"2026-06-05", done:true},
+          {n:"poc/MUSICOLET_PARTNERSHIP.md — three-phase outreach doc for Krosbits / Maulik Raviya", d:"2026-06-05", done:true}]},
+        {code:"26.002.05", name:"[UNBLOCK] Recover fetch_v3.py from Termux device", exec:"Build", status:"Needs input", deadline:"2026-06-08", who:"Pete", deps:[], subs:[
+          {n:"Copy fetch_v3.py off Termux → paste into artwork/fetch.py in repo", d:"2026-06-07", done:false},
+          {n:"Commit + push to branch claude/project-handover-music-advice-0zVQ0", d:"2026-06-08", done:false}]},
+        {code:"26.002.06", name:"[UNBLOCK] Register API keys + open decisions", exec:"Admin", status:"Needs input", deadline:"2026-06-10", who:"Pete", deps:[], subs:[
+          {n:"TheAudioDB: register key at theaudiodb.com under PT Live Design (replace shared key 123)", d:"2026-06-08", done:false},
+          {n:"Pinata: create account at pinata.cloud, generate JWT → paste into localhost:5000/settings", d:"2026-06-09", done:false},
+          {n:"DECIDE: folder.jpg at 600px or full CAA resolution? (open decision #4)", d:"2026-06-10", done:false}]},
+        {code:"26.002.07", name:"First real pipeline run on Termux music library", exec:"Build", status:"Concept", deadline:"2026-06-15", who:"Pete", deps:["26.002.05"], subs:[
+          {n:"git pull on Termux (branch: claude/project-handover-music-advice-0zVQ0)", d:"2026-06-12", done:false},
+          {n:"pip install -r requirements.txt", d:"2026-06-12", done:false},
+          {n:"python sub_terrainian.py scan ~/storage/shared/Music", d:"2026-06-12", done:false},
+          {n:"python poc/demo.py --sample 20 → review coverage % in poc/last_report.json", d:"2026-06-13", done:false},
+          {n:"python sub_terrainian.py serve → browser opens automatically, check dashboard", d:"2026-06-13", done:false}]},
+        {code:"26.002.08", name:"Musicolet outreach — send to Maulik Raviya / Krosbits", exec:"Partnership", status:"In progress", deadline:"2026-06-15", who:"Pete", deps:["26.002.07"], subs:[
+          {n:"Update real coverage % in poc/MUSICOLET_PARTNERSHIP.md after pipeline run", d:"2026-06-13", done:false},
+          {n:"Send email to Maulik Raviya — template is poc/MUSICOLET_PARTNERSHIP.md", d:"2026-06-14", done:false},
+          {n:"Follow up if no reply after 2 weeks", d:"2026-06-28", done:false}]},
+        {code:"26.002.09", name:"PWA polish — Add to Home Screen on Termux", exec:"Build", status:"Concept", deadline:"2026-06-30", who:"Pete", deps:["26.002.07"], subs:[
+          {n:"Chrome on Termux: confirm Add to Home Screen install prompt appears", d:"2026-06-25", done:false},
+          {n:"Launch from home screen — verify standalone mode (no browser chrome)", d:"2026-06-26", done:false}]},
+        {code:"26.002.10", name:"Deploy MusicEdition + PhysicalClaim to Base Sepolia", exec:"Build", status:"Concept", deadline:"2026-06-20", who:"Pete", deps:["26.002.06"], subs:[
+          {n:"Open remix.ethereum.org on Android Chrome — follow REMIX_DEPLOY.md", d:"2026-06-16", done:false},
+          {n:"Add Base Sepolia (Chain ID 84532) to MetaMask + get testnet ETH", d:"2026-06-17", done:false},
+          {n:"Deploy MusicEdition → copy address to /settings page", d:"2026-06-18", done:false},
+          {n:"Deploy PhysicalClaim → copy address to /settings page", d:"2026-06-18", done:false},
+          {n:"Verify both contracts on sepolia.basescan.org", d:"2026-06-20", done:false}]},
+        {code:"26.002.11", name:"Transmutation bridge — burnAndClaim() contract", exec:"Build", status:"Concept", deadline:"2026-07-15", who:"Claude Code", deps:["26.002.10"], subs:[
+          {n:"Add ERC1155Burnable extension to MusicEdition.sol", d:"2026-07-08", done:false},
+          {n:"Add burnAndClaim(tokenId, mbid) — burns edition token → issues soulbound receipt", d:"2026-07-10", done:false},
+          {n:"Foundry test: burn reduces supply, soulbound issued, double-redeem blocked", d:"2026-07-12", done:false},
+          {n:"Add /redeem/<token_id> Flask endpoint for shipping address collection", d:"2026-07-15", done:false}]},
+        {code:"26.002.12", name:"IPFS metadata — token URIs live", exec:"Build", status:"Concept", deadline:"2026-07-31", who:"Claude Code", deps:["26.002.10"], subs:[
+          {n:"Test chain/manifest_bridge.py against real manifest release", d:"2026-07-20", done:false},
+          {n:"Pin test metadata JSON to Pinata — verify IPFS URI resolves", d:"2026-07-24", done:false},
+          {n:"Write chain/pin_all.py — batch pin all minted releases to IPFS", d:"2026-07-31", done:false}]},
+        {code:"26.002.13", name:"First artist pilot — Project Redshift catalogue (26.005)", exec:"Marketing", status:"Concept", deadline:"2026-08-15", who:"Pete", deps:["26.002.11","26.002.12"], subs:[
+          {n:"Run full pipeline on Redshift catalogue (Pete's own releases)", d:"2026-08-05", done:false},
+          {n:"Mint limited edition 100 tokens on Base Sepolia", d:"2026-08-08", done:false},
+          {n:"Resell 1 test token on testnet — confirm EIP-2981 royalty fires automatically", d:"2026-08-10", done:false},
+          {n:"Screenshot royalty receipt — this is the demo reel for every label conversation", d:"2026-08-12", done:false}]},
+        {code:"26.002.14", name:"[v0.2] Win-Win-Win — label onboarding flow", exec:"Partnership", status:"Concept", deadline:"2026-11-30", who:"Pete", deps:["26.002.13"], subs:[
+          {n:"Design label onboarding: batch mint for catalogue releases", d:"2026-10-15", done:false},
+          {n:"Secondary royalty pitch deck: Discogs resale market currently earns labels zero", d:"2026-10-30", done:false},
+          {n:"Pilot with one label contact (after Redshift demo proves the model)", d:"2026-11-30", done:false}]}
+      ]
+    },
+    {
+      code:"26.003", name:"Bauhaus 21", type:"IP", icon:"bauhaus", parent:"bauhaus21",
+      one:"The patentable core: link a physical record (LP, CD, tape) to its digital files, with the artwork acting as copyright and licence verification, plus offline-player integration.",
+      color:"#d6402c", deadline:"2026-08-31", readiness:10, pub:"Concept", status:"Concept",
+      touched:"2026-05-20", streak:0, github:"",
+      source:"Memory TODO + philosophy thread",
+      smallest:"Open a blank doc and write the one-sentence claim: what the mechanism does that nothing else does.",
+      tasks:[
+        {code:"26.003.01", name:"One-pager + provisional patent outline", exec:"Writing", status:"Concept", deadline:"2026-06-15", who:"Pete", deps:[], subs:[
+          {n:"Plain-English mechanism one-pager", d:"2026-06-08", done:false},
+          {n:"Provisional claims outline", d:"2026-06-15", done:false}]},
+        {code:"26.003.02", name:"File provisional patent (sub-project)", exec:"Legal", status:"Concept", deadline:"2026-07-31", who:"Pete", deps:["26.003.01"], subs:[
+          {n:"IPO search + attorney sanity check", d:"2026-07-10", done:false},
+          {n:"Submit provisional", d:"2026-07-31", done:false}]},
+        {code:"26.003.03", name:"Build ownership-anchor into SUB-Terrainian", exec:"Build", status:"Concept", deadline:"2026-09-30", who:"Claude Code", deps:["26.003.02","26.002.02"], subs:[]}
+      ]
+    },
+    {
+      code:"26.004", name:"NFT Infinite Artwork", type:"IP", icon:"diamond", parent:"redshift",
+      one:"Dynamic, interactive, AI-powered album artwork as verifiable digital ownership: art that responds and evolves, minted to a release.",
+      color:"#ea580c", deadline:"2026-12-31", readiness:8, pub:"Concept", status:"Concept",
+      touched:"2026-05-17", streak:0, github:"",
+      source:"Project + chat: NFTs as verifiable digital ownership",
+      smallest:"Write three sentences: what changes in the artwork, what triggers it, and what the owner actually owns.",
+      tasks:[
+        {code:"26.004.01", name:"Concept + technical spec", exec:"Writing", status:"Concept", deadline:"2026-07-15", who:"Pete", deps:[], subs:[]},
+        {code:"26.004.02", name:"Prototype dynamic / AI artwork engine (sub-project)", exec:"Build", status:"Concept", deadline:"2026-09-30", who:"Claude Code", deps:["26.004.01"], subs:[]},
+        {code:"26.004.03", name:"Mint + launch with a Redshift release", exec:"Marketing", status:"Concept", deadline:"2026-12-15", who:"Pete", deps:["26.004.02","26.003.02","26.005.02"], subs:[]}
+      ]
+    },
+    {
+      code:"26.005", name:"Project Redshift", type:"Creative", icon:"star", parent:"redshift",
+      one:"Your recording-artist project: four singles out, international airplay, run on self-directed social campaigns. Doubles as proof of audience growth.",
+      color:"#db2777", deadline:"2026-08-31", readiness:70, pub:"Live", status:"Live",
+      touched:"2026-05-30", streak:6, github:"https://github.com/FetaPit/Project-Redshift",
+      source:"Claude Code: next actions + media coverage tracking",
+      smallest:"Pick the next single. Just name the track.",
+      tasks:[
+        {code:"26.005.01", name:"Next release plan + content audit", exec:"Marketing", status:"In progress", deadline:"2026-06-30", who:"Pete", deps:[], subs:[]},
+        {code:"26.005.02", name:"Release + airplay campaign (sub-project)", exec:"Marketing", status:"Concept", deadline:"2026-07-31", who:"Pete", deps:["26.005.01"], subs:[]},
+        {code:"26.005.03", name:"Catalogue as SUB-T / NFT flagship demo", exec:"Marketing", status:"Concept", deadline:"2026-08-31", who:"Pete", deps:["26.002.02","26.005.02"], subs:[]},
+        {code:"26.005.04", name:"Mobile studio build — Vario conversion (sub-project)", exec:"Build", status:"Concept", deadline:"2027-03-31", who:"Pete", deps:[], subs:[]}
+      ]
+    },
+    {
+      code:"26.006", name:"PeTe T", type:"Service", icon:"hub", parent:"petet",
+      one:"Your solo artist-and-designer front door: one centralised hub that funnels people to your creative services and music.",
+      color:"#334155", deadline:"2026-07-31", readiness:35, pub:"Pre-Alpha", status:"In progress",
+      touched:"2026-05-29", streak:2, github:"",
+      source:"Project: PeTe T (starred)",
+      smallest:"List the five links the hub must have. Nothing else.",
+      tasks:[
+        {code:"26.006.01", name:"Build centralised creative-services link hub", exec:"Build", status:"In progress", deadline:"2026-06-30", who:"Pete", deps:[], subs:[]},
+        {code:"26.006.02", name:"Launch + funnel client work", exec:"Marketing", status:"Concept", deadline:"2026-07-31", who:"Pete", deps:["26.006.01"], subs:[]}
+      ]
+    },
+    {
+      code:"26.007", name:"PT Live Design (studio)", type:"Service", icon:"grid",
+      one:"The core studio: client design, brand and motion work. The cashflow engine that funds everything else.",
+      color:"#0f766e", deadline:"2026-12-31", readiness:80, pub:"Live", status:"Live",
+      touched:"2026-05-28", streak:3, github:"",
+      source:"Project: PT Live Design",
+      smallest:"Add one finished piece to the Canva portfolio.",
+      tasks:[
+        {code:"26.007.01", name:"Portfolio refresh (Canva)", exec:"Design", status:"In progress", deadline:"2026-06-30", who:"Pete", deps:[], subs:[
+          {n:"Add Vault-It, PurposeOS, Gratitood", d:"2026-06-20", done:false}]},
+        {code:"26.007.02", name:"Agency outreach (100+ list)", exec:"Marketing", status:"Concept", deadline:"2026-09-30", who:"Pete", deps:["26.007.01"], subs:[]},
+        {code:"26.007.03", name:"Gratitood final sign-off", exec:"Design", status:"In progress", deadline:"2026-06-15", who:"Pete", deps:[], subs:[]},
+        {code:"26.007.04", name:"Ongoing client delivery", exec:"Design", status:"Live", deadline:"", who:"Pete", deps:[], subs:[]}
+      ]
+    },
+    {
+      code:"26.008", name:"Live Fintech / FFHF", type:"Research", icon:"chart",
+      one:"A research product built on your own audited trading track record, monetised once the record and any regulatory gate are cleared.",
+      color:"#16a34a", deadline:"2027-05-31", readiness:25, pub:"Concept", status:"In progress",
+      touched:"2026-05-18", streak:0, github:"",
+      source:"Project: Live Fintech",
+      smallest:"Export this month's trading results to one clean sheet.",
+      tasks:[
+        {code:"26.008.01", name:"Build audited track record", exec:"Finance", status:"In progress", deadline:"", who:"Pete", deps:[], subs:[]},
+        {code:"26.008.02", name:"FFHF research product MVP", exec:"Build", status:"Concept", deadline:"2026-11-30", who:"Pete", deps:["26.001.06"], subs:[]},
+        {code:"26.008.03", name:"Monetise (research sub, post-gate)", exec:"Finance", status:"Concept", deadline:"2027-05-31", who:"Pete", deps:["26.008.01","26.008.02"], subs:[]}
+      ]
+    },
+    {
+      code:"26.009", name:"Daijishō", type:"Hardware", icon:"console",
+      one:"A mobile gaming console and emulation platform, with a platform-licensing model (the TAI angle) as the longer-term revenue.",
+      color:"#0ea5e9", deadline:"2027-03-31", readiness:12, pub:"Concept", status:"Concept",
+      touched:"2026-05-22", streak:0, github:"",
+      source:"Project: Daijishō Mobile Gaming Console + Emulation Platform",
+      smallest:"Write down the one thing this does that a Retroid or Anbernic doesn't.",
+      tasks:[
+        {code:"26.009.01", name:"Hardware spec + research", exec:"Research", status:"Concept", deadline:"2026-08-31", who:"Pete", deps:[], subs:[]},
+        {code:"26.009.02", name:"Prototype build (sub-project)", exec:"Build", status:"Concept", deadline:"2026-12-31", who:"Pete", deps:["26.009.01"], subs:[]},
+        {code:"26.009.03", name:"Platform licensing model (TAI)", exec:"Legal", status:"Concept", deadline:"2027-03-31", who:"Pete", deps:["26.009.02"], subs:[]}
+      ]
+    },
+    {
+      code:"26.010", name:"Plaza Futura", type:"IP", icon:"tower",
+      one:"A human-centred metropolis concept: energy-generative public space and solar envelope zoning, used as a consulting and thought-leadership asset.",
+      color:"#ca8a04", deadline:"2026-09-30", readiness:30, pub:"Alpha", status:"Concept",
+      touched:"2026-05-10", streak:0, github:"",
+      source:"Project / Canva whitepaper",
+      smallest:"Find one credible piezoelectric output figure (Tokyo Station) and write it down.",
+      tasks:[
+        {code:"26.010.01", name:"Fix energy figures + tighten whitepaper", exec:"Research", status:"Concept", deadline:"2026-06-30", who:"Pete", deps:[], subs:[
+          {n:"Replace piezo claims with verified data", d:"2026-06-20", done:false},
+          {n:"Reposition piezo as participatory not grid-scale", d:"2026-06-25", done:false}]},
+        {code:"26.010.02", name:"Expert validation + thought-leadership", exec:"Partnership", status:"Concept", deadline:"2026-09-30", who:"Pete", deps:["26.010.01"], subs:[]}
+      ]
+    },
+    {
+      code:"26.011", name:"Shiba After Dark", type:"Platform", icon:"moon",
+      one:"An ethical adult-creator platform on Shibarium with a $BARK token. IP documented and dated; a deliberate slow burn while capital is tight.",
+      color:"#92400e", deadline:"2027-05-31", readiness:15, pub:"Concept", status:"Concept",
+      touched:"2026-05-03", streak:0, github:"",
+      source:"Copyright Memorandum + Whitepaper v0.1",
+      smallest:"Run a free UK IPO trademark search on the name. Ten minutes.",
+      tasks:[
+        {code:"26.011.01", name:"UK trademark searches (name + $BARK)", exec:"Legal", status:"Concept", deadline:"2026-07-31", who:"Pete", deps:[], subs:[]},
+        {code:"26.011.02", name:"Founding-creator term sheets + Shibarium outreach", exec:"Partnership", status:"Concept", deadline:"2026-11-30", who:"Pete", deps:["26.011.01"], subs:[]}
+      ]
+    },
+    {
+      code:"26.012", name:"Career / FLA", type:"Career", icon:"steps",
+      one:"Future London Academy, Executive Programme for Design Leaders: application live and interviewed, Birch Fund grant essay submitted.",
+      color:"#7c2d12", deadline:"2026-06-30", readiness:60, pub:"Beta", status:"In progress",
+      touched:"2026-05-17", streak:1, github:"",
+      source:"Project: Future London Academy + NABS",
+      smallest:"Send a one-line status chase on the Birch Fund decision.",
+      tasks:[
+        {code:"26.012.01", name:"Chase FLA + Birch Fund outcome", exec:"Admin", status:"In progress", deadline:"2026-06-15", who:"Pete", deps:[], subs:[]}
+      ]
+    },
+    {
+      code:"26.013", name:"Vallum x Vice", type:"Creative", icon:"cross",
+      one:"INFERRED, NEEDS YOUR LINE: a collaboration or label/brand venture (most recently active project). Confirm the parties and the goal.",
+      color:"#9333ea", deadline:"", readiness:5, pub:"Concept", status:"Scope TBC",
+      touched:"2026-05-30", streak:0, github:"",
+      source:"Project: Vallum x Vice (active 11h ago)",
+      smallest:"Tell me in one line what Vallum x Vice is.",
+      tasks:[
+        {code:"26.013.01", name:"Define scope + objective", exec:"Writing", status:"Scope TBC", deadline:"", who:"Pete", deps:[], subs:[]}
+      ]
+    },
+    {
+      code:"26.014", name:"Infinite Value Glitch", type:"Service", icon:"bolt",
+      one:"Automated digital-income stack: AI training-data work (Scale, Outlier), 4K stock video, digital downloads and silver scouting, run mostly hands-off on your NAS. Your fastest-to-market earner. (Confirm this maps to your project.)",
+      color:"#0891b2", deadline:"2026-08-31", readiness:18, pub:"Pre-Alpha", status:"In progress",
+      touched:"2026-05-24", streak:0, github:"",
+      source:"Project: Infinite Value Glitch + chat: automated digital business strategy (15 Mar)",
+      smallest:"Sign up to one AI training-data platform (Outlier or Scale) and start onboarding.",
+      tasks:[
+        {code:"26.014.01", name:"AI training-data income (Scale / Outlier)", exec:"Admin", status:"Concept", deadline:"2026-06-30", who:"Pete", deps:[], subs:[
+          {n:"Apply + pass onboarding assessment", d:"2026-06-20", done:false}]},
+        {code:"26.014.02", name:"4K stock video pipeline (Figma Weave / Veo)", exec:"Build", status:"Concept", deadline:"2026-07-31", who:"Pete", deps:[], subs:[]},
+        {code:"26.014.03", name:"Digital downloads (prompt packs, Notion templates)", exec:"Build", status:"Concept", deadline:"2026-07-31", who:"Pete", deps:[], subs:[]},
+        {code:"26.014.04", name:"Self-host infra (n8n + Storj on TerraMaster NAS)", exec:"Build", status:"Concept", deadline:"2026-08-15", who:"Pete", deps:[], subs:[
+          {n:"Install n8n on NAS (replace Gumloop)", d:"2026-08-05", done:false},
+          {n:"Enable Storj hosting for passive income", d:"2026-08-15", done:false}]}
+      ]
+    },
+    {
+      code:"26.015", name:"PhoenixOS", type:"Software", icon:"flame",
+      one:"INFERRED, NEEDS YOUR LINE: likely a privacy-hardened or custom OS build, given your GrapheneOS-class threat model. Confirm scope and commercial angle.",
+      color:"#475569", deadline:"", readiness:5, pub:"Concept", status:"Scope TBC",
+      touched:"2026-05-24", streak:0, github:"",
+      source:"Project: PhoenixOS",
+      smallest:"Tell me in one line what PhoenixOS is.",
+      tasks:[
+        {code:"26.015.01", name:"Define scope + objective", exec:"Writing", status:"Scope TBC", deadline:"", who:"Pete", deps:[], subs:[]}
+      ]
+    },
+    {
+      code:"26.016", name:"OP MASSIVE", type:"Creative", icon:"burst",
+      one:"INFERRED, NEEDS YOUR LINE: no detail on record. Possibly a music or campaign project. Confirm what it is.",
+      color:"#a16207", deadline:"", readiness:5, pub:"Concept", status:"Scope TBC",
+      touched:"2026-05-10", streak:0, github:"",
+      source:"Project: OP MASSIVE",
+      smallest:"Tell me in one line what OP MASSIVE is.",
+      tasks:[
+        {code:"26.016.01", name:"Define scope + objective", exec:"Writing", status:"Scope TBC", deadline:"", who:"Pete", deps:[], subs:[]}
+      ]
+    }
+  ],
+
+  // ---------------- TEAM & OPPORTUNITIES (per project, keyed by code) ----------------
+  crm:{
+   "26.001":{team:[{name:"Pete Thickett",role:"Lead / design"},{name:"Claude Code",role:"Build"}],
+     opps:[{title:"33 alpha testers",kind:"Tester",status:"Lead",note:"Recruit from r/UKInvesting, T212, network"},
+       {title:"99 beta testers",kind:"Tester",status:"Lead",note:"Open waitlist then invite"},
+       {title:"Founder tier (£5) conversions",kind:"Revenue",status:"Lead",note:"Lock founder price for testers"}]},
+   "26.002":{team:[{name:"Pete Thickett",role:"Lead"}],
+     opps:[{title:"Musicolet partnership",kind:"Partner",status:"Active",note:"Verification-layer integration"},
+       {title:"Sync / catalogue licensing",kind:"Revenue",status:"Lead",note:"A&R + sync buyers"}]},
+   "26.005":{team:[{name:"Pete Thickett",role:"Artist"}],
+     opps:[{title:"Planet Rock airplay",kind:"Press",status:"Won",note:""},
+       {title:"Hard Rock Hell",kind:"Press",status:"Won",note:""},
+       {title:"BBC Lincolnshire",kind:"Press",status:"Won",note:""},
+       {title:"Playlist pitching, next single",kind:"Press",status:"Lead",note:""}]},
+   "26.007":{team:[{name:"Pete Thickett",role:"Studio principal"}],
+     opps:[{title:"UK agency outreach (100+ list)",kind:"Client",status:"Active",note:"Creative leadership contacts"},
+       {title:"Gratitood",kind:"Client",status:"Active",note:"Lottie splash delivery"}]},
+   "26.010":{team:[{name:"Pete Thickett",role:"Author"}],
+     opps:[{title:"Better Society Academy (Rome)",kind:"Grant",status:"Applied",note:""},
+       {title:"Expert validators (energy figures)",kind:"Partner",status:"Lead",note:"Need credible piezo data"}]},
+   "26.011":{team:[{name:"Pete Thickett",role:"Founder"}],
+     opps:[{title:"Founding creators",kind:"Partner",status:"Lead",note:""},
+       {title:"Shibarium ecosystem",kind:"Partner",status:"Lead",note:""}]},
+   "26.012":{team:[{name:"Pete Thickett",role:"Applicant"},{name:"Ruth Sherrington",role:"NABS Senior Support Advisor / mentor"}],
+     opps:[{title:"FLA Executive Programme",kind:"Grant",status:"Applied",note:"Interviewed"},
+       {title:"Birch Fund grant",kind:"Grant",status:"Applied",note:"Essay submitted"}]},
+   "26.014":{team:[{name:"Pete Thickett",role:"Operator"}],
+     opps:[{title:"Outlier / Scale / Appen",kind:"Revenue",status:"Lead",note:"Domain-expert onboarding"}]}
+  },
+
+  // ---------------- KNOX: IP / ASSET / COMMS REGISTER ----------------
+  // Index-and-link only. SECRET items are referenced, never stored.
+  // File ref convention (JSP 441-informed):
+  //   <ProjectRef>_<EXEC>_<DOCTYPE>_<ShortTitle>_<YYYYMMDD>_<vX.Y>_<CLASS>
+  knox: [
+    // Vault-It
+    {proj:"26.001", ref:"26.001_BLD_CODE_VaultItPrototype_20260508_v1.0_OFFICIAL", title:"Vault-It working prototype (single-file, 309KB)", type:"Code", cls:"OFFICIAL", loc:"Local + FetaPit/Pareto-", note:"Most advanced build. Source of truth = Claude Code repo."},
+    {proj:"26.001", ref:"26.001_BLD_DOC_ClaudeHandover_20260508_v1.0_OFFICIAL", title:"CLAUDE.md handover + rebuild prompt", type:"Doc", cls:"OFFICIAL", loc:"FetaPit/Pareto-", note:"Rebuild instructions for Phase 2."},
+    {proj:"26.001", ref:"26.001_BLD_SPEC_FFHFSpec_20260508_v1.0_OFFICIAL", title:"FFHF feature spec (assumes Stocks tab)", type:"Spec", cls:"OFFICIAL", loc:"Repo / chat", note:"Drives blocker 26.001.02."},
+    {proj:"26.001", ref:"26.001_BLD_SPEC_JourneyMapSpec_20260508_v1.0_OFFICIAL", title:"Journey Map Engineering Spec v1", type:"Spec", cls:"OFFICIAL", loc:"Repo / chat", note:"Drives 26.001.01."},
+    {proj:"26.001", ref:"26.001_LEG_REC_PriorArtRecord_20260508_v1.0_OFFICIAL-SENSITIVE", title:"Prior-art / trademark record", type:"Record", cls:"OFFICIAL-SENSITIVE", loc:"Local", note:"Dated 8 May 2026."},
+    {proj:"26.001", ref:"26.001_BLD_CODE_IPVaultPrototype_20260513_v0.1_OFFICIAL", title:"ip-vault.html — Bauhaus 21 IP-asset visualiser (Three.js isometric on blueprint plane) + CLAUDE.md handover", type:"Code", cls:"OFFICIAL", loc:"FetaPit/Pareto- : prototypes/ip-vault/", note:"Realises Bauhaus 21 (26.003) as a Vault-It tab. Feeds 26.001.08."},
+    // SUB-Terrainian
+    {proj:"26.002", ref:"26.002_BLD_CODE_FetchV3_20260523_v3.0_OFFICIAL", title:"fetch_v3.py — artwork fetcher", type:"Code", cls:"OFFICIAL", loc:"Termux device (NOT in repo yet)", note:"Recover into artwork/fetch.py (26.002.01)."},
+    {proj:"26.002", ref:"26.002_BLD_CODE_SyncLyricsFinal_20260524_v1.0_OFFICIAL", title:"sync-lyrics-final.sh — 5-tier synced-lyrics engine (LRCLIB exact/fuzzy, NetEase, LRCLIB plain, Lyrics.ovh)", type:"Code", cls:"OFFICIAL", loc:"Termux: ~/storage/shared/Music/Scripts For Music/", note:"WORKING. Title/artist cleanup, --retry-plain upgrade mode. Commit to repo."},
+    {proj:"26.002", ref:"26.002_BLD_DOC_Handover_20260523_v1.0_OFFICIAL", title:"SUB-Terrainian handover doc", type:"Doc", cls:"OFFICIAL", loc:"FetaPit/SUB-Terrainian", note:""},
+    {proj:"26.002", ref:"26.002_PTR_DOC_MusicoletStrategy_20260523_v1.0_OFFICIAL-SENSITIVE", title:"Musicolet partnership + verification-layer strategy", type:"Doc", cls:"OFFICIAL-SENSITIVE", loc:"Project: SUB-Terrainian", note:"Commercial terms."},
+    {proj:"26.002", ref:"26.002_BLD_CODE_Sprint1Contracts_20260531_v1.0_OFFICIAL", title:"Sprint 1 — MusicEdition.sol + PhysicalClaim.sol + Foundry test suite (23 tests)", type:"Code", cls:"OFFICIAL", loc:"https://github.com/FetaPit/SUB-Terrainian", note:"ERC-1155+EIP-2981 limited editions + EIP-5192 soulbound. Deploy via REMIX_DEPLOY.md on Android Chrome."},
+    {proj:"26.002", ref:"26.002_BLD_CODE_Sprint2Pipeline_20260603_v1.0_OFFICIAL", title:"Sprint 2 — 4-phase pipeline + Flask PWA + sub_terrainian.py orchestrator", type:"Code", cls:"OFFICIAL", loc:"https://github.com/FetaPit/SUB-Terrainian", note:"db/ metadata/ artwork/ portraits/ lyrics/ chain/ — all phases built. SSE runner. MediaStore sync for all local players."},
+    {proj:"26.002", ref:"26.002_BLD_CODE_Sprint3PWA_20260605_v1.0_OFFICIAL", title:"Sprint 3 — PWA manifest + service worker + /settings page + auto-open browser", type:"Code", cls:"OFFICIAL", loc:"https://github.com/FetaPit/SUB-Terrainian", note:"Installable to Android home screen. /settings writes .env from browser. /icon/<size> PIL-generated."},
+    {proj:"26.002", ref:"26.002_PTR_CODE_PoCDemo_20260605_v1.0_OFFICIAL", title:"poc/demo.py — coverage report runner + poc/MUSICOLET_PARTNERSHIP.md three-phase outreach template", type:"Code", cls:"OFFICIAL", loc:"https://github.com/FetaPit/SUB-Terrainian", note:"Run: python poc/demo.py --sample 20. Saves poc/last_report.json. Send MD to Maulik Raviya / Krosbits."},
+    {proj:"26.002", ref:"26.002_BLD_CODE_VentureSync_20260605_v1.0_OFFICIAL", title:"Venture Control automation — tools/sync_dashboard.py + GitHub Actions workflow + global Claude Code hook", type:"Code", cls:"OFFICIAL", loc:"https://github.com/FetaPit/SUB-Terrainian", note:"Cross-platform: Stop hook fires for all Claude Code projects. Queue mode pushes ops to Control_Room/pending/; GitHub Actions applies to dashboard. Chat instructions in venture_control/CHAT_WORKFLOW.md."},
+    // Bauhaus 21
+    {proj:"26.003", ref:"26.003_LEG_PAT_Bauhaus21Outline_PENDING_v0.1_OFFICIAL-SENSITIVE", title:"Bauhaus 21 one-pager + provisional patent outline", type:"Patent", cls:"OFFICIAL-SENSITIVE", loc:"TO BE CREATED (26.003.01)", note:"Does not exist yet. Highest IP priority."},
+    {proj:"26.003", ref:"26.003_WRT_DOC_Bauhaus21Philosophy_20260520_v0.1_PUBLIC", title:"Bauhaus 21 philosophy note", type:"Doc", cls:"PUBLIC", loc:"Chat / memory", note:"Craft + tech + social purpose; counter-movement framing."},
+    // NFT Infinite Artwork
+    {proj:"26.004", ref:"26.004_WRT_DOC_NFTConcept_20260517_v0.1_OFFICIAL-SENSITIVE", title:"NFT infinite-artwork concept notes", type:"Doc", cls:"OFFICIAL-SENSITIVE", loc:"Project / chat: NFTs as verifiable ownership", note:"Spec to be written (26.004.01)."},
+    // Project Redshift
+    {proj:"26.005", ref:"26.005_MKT_REC_AirplayLog_20260531_v1.0_OFFICIAL", title:"Airplay + media coverage log", type:"Record", cls:"OFFICIAL", loc:"FetaPit/Project-Redshift", note:"Planet Rock, Hard Rock Hell, BBC Lincs, intl."},
+    {proj:"26.005", ref:"26.005_BLD_CODE_VarioStudio_20260507_v0.1_OFFICIAL", title:"vario-studio.tsx — mobile studio layout tool", type:"Code", cls:"OFFICIAL", loc:"Repo / chat", note:"Feeds 26.005.04."},
+    {proj:"26.005", ref:"26.005_MKT_AST_SinglesMasters_x4_v1.0_OFFICIAL-SENSITIVE", title:"Four released singles (masters + art)", type:"Asset", cls:"OFFICIAL-SENSITIVE", loc:"DSPs + local masters", note:"Catalogue IP."},
+    // Studio + clients
+    {proj:"26.007", ref:"26.007_DES_AST_GratitoodSplash_20260507_v1.0_OFFICIAL-SENSITIVE", title:"Gratitood animated logo splash (Lottie JSON, 1080x1920)", type:"Asset", cls:"OFFICIAL-SENSITIVE", loc:"Client delivery", note:"Confirm final sign-off (26.007.03)."},
+    {proj:"26.007", ref:"26.007_DES_AST_PurposeOSDesign_20260508_v1.0_OFFICIAL-SENSITIVE", title:"PurposeOS client design (Vault-It lineage)", type:"Asset", cls:"OFFICIAL-SENSITIVE", loc:"FetaPit/Pareto- lineage", note:"Keep IP line clean vs Vault-It."},
+    {proj:"26.007", ref:"26.007_MKT_REC_AgencyOutreachList_20260508_v1.0_OFFICIAL-SENSITIVE", title:"UK agency outreach list (100+ with creative leads)", type:"Record", cls:"OFFICIAL-SENSITIVE", loc:"Local", note:"Drives 26.007.02."},
+    {proj:"26.007", ref:"26.007_DES_AST_Portfolio_20260531_v1.0_PUBLIC", title:"Portfolio site", type:"Asset", cls:"PUBLIC", loc:"https://ptlive.my.canva.site", note:""},
+    // Live Fintech
+    {proj:"26.008", ref:"26.008_FIN_REC_TradingTrackRecord_20260531_v1.0_OFFICIAL-SENSITIVE", title:"Trading 212 track record (defence/aerospace + UK dividend pies)", type:"Record", cls:"OFFICIAL-SENSITIVE", loc:"Trading 212 / local", note:"Underpins FFHF credibility."},
+    // Plaza Futura
+    {proj:"26.010", ref:"26.010_WRT_WPR_PlazaFuturaWhitepaper_20260508_v0.9_OFFICIAL", title:"Plaza Futura whitepaper", type:"Whitepaper", cls:"OFFICIAL", loc:"Canva", note:"FLAW: piezo energy figures wrong. Fix before sharing (26.010.01)."},
+    // Shiba After Dark
+    {proj:"26.011", ref:"26.011_LEG_MOI_ShibaCopyrightMemo_20260503_v1.0_OFFICIAL-SENSITIVE", title:"Copyright Memorandum of Intent", type:"Memo", cls:"OFFICIAL-SENSITIVE", loc:"Local", note:"Dated 3 May 2026."},
+    {proj:"26.011", ref:"26.011_WRT_WPR_ShibaWhitepaper_20260503_v0.1_OFFICIAL-SENSITIVE", title:"Shiba After Dark Whitepaper v0.1", type:"Whitepaper", cls:"OFFICIAL-SENSITIVE", loc:"Local", note:"$BARK token model."},
+    // Career
+    {proj:"26.012", ref:"26.012_WRT_ESS_BirchFundEssay_20260508_v1.0_OFFICIAL-SENSITIVE", title:"Birch Fund grant essay (designed PDF)", type:"Essay", cls:"OFFICIAL-SENSITIVE", loc:"Local", note:"Submitted. Bauhaus 21 framing."},
+    {proj:"26.012", ref:"26.012_ADM_DOC_FLAApplication_20260508_v1.0_OFFICIAL-SENSITIVE", title:"FLA Executive Programme application", type:"Doc", cls:"OFFICIAL-SENSITIVE", loc:"Local / FLA portal", note:"Interviewed."},
+    {proj:"26.012", ref:"26.012_WRT_CV_MasterCV_20260506_v1.0_OFFICIAL-SENSITIVE", title:"Master CV + tailored versions (Optima, Synthesia, Adobe)", type:"CV", cls:"OFFICIAL-SENSITIVE", loc:"Local", note:"IN2 + Babcock/RAF OTA centred."},
+    {proj:"26.001", ref:"26.001_ADM_PLN_ReleaseRoadmap_20260602_v1.0_OFFICIAL", title:"Vault-It release roadmap — Pre-Alpha → Alpha(33) → Beta(99) → all app stores", type:"Plan", cls:"OFFICIAL", loc:"Venture Control (26.001)", note:"Tester-gated ladder. Alpha exit + Beta exit are hard gates."},
+    {proj:"26.001", ref:"26.001_MKT_REC_TesterRegister_PENDING_v0.1_OFFICIAL-SENSITIVE", title:"Tester register (33 alpha, then 99 beta)", type:"Record", cls:"OFFICIAL-SENSITIVE", loc:"TO BE CREATED (26.001.08)", note:"Sign-up form + names + Founder-tier lock. Personal data: GDPR basis."},
+    {proj:"26.001", ref:"26.001_LEG_DOC_CompliancePack_PENDING_v0.1_OFFICIAL-SENSITIVE", title:"Compliance pack: privacy policy, T&Cs, financial-promotions check", type:"Doc", cls:"OFFICIAL-SENSITIVE", loc:"TO BE CREATED (26.001.15)", note:"Open banking via regulated AISP (TrueLayer/Plaid hold the FCA permission). 'Not financial advice' framing."},
+    {proj:"26.001", ref:"26.001_DES_CODE_IPVaultPrototype_20260513_v0.1_OFFICIAL", title:"IP Vault tab — Bauhaus 21 isometric IP dashboard (Three.js)", type:"Code", cls:"OFFICIAL", loc:"FetaPit/Pareto- · prototypes/ip-vault/ (ip-vault.html + CLAUDE.md)", note:"Beta integration (26.001.23). Realises the Bauhaus 21 (26.003) visual layer inside Vault-It."},
+    // Credentials pointer (never stored)
+    {proj:"26.014", ref:"26.014_RES_DOC_AutoIncomeStrategy_20260315_v1.0_OFFICIAL-SENSITIVE", title:"Automated digital-income strategy (AI training data, 4K stock video, downloads, silver scouting)", type:"Doc", cls:"OFFICIAL-SENSITIVE", loc:"Chat / memory (15 Mar)", note:"The 'infinity money glitch' = AI training-data demand."},
+    {proj:"26.014", ref:"26.014_BLD_REC_SelfHostInfra_20260315_v1.0_OFFICIAL", title:"Self-host infra plan: TerraMaster F2-220 NAS, self-hosted n8n, Storj hosting", type:"Record", cls:"OFFICIAL", loc:"Local / NAS", note:"Cost-reduction + passive income routes. Figma edu (Weave/Veo/Sora), Adobe CC, Synthesia in stack."},
+    {proj:"ALL", ref:"00.000_SEC_REF_Credentials_NEVER-STORED_v0_SECRET", title:"API keys, wallet seeds, passwords", type:"Reference", cls:"SECRET", loc:"VeraCrypt / password manager ONLY", note:"NEVER paste into Knox. This row is a pointer, not storage."}
+  ]
+};
+</script>
+<script>
+const MONTHS=["Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan","Feb","Mar","Apr","May"];
+const M_YEAR=["26","26","26","26","26","26","26","27","27","27","27","27"];
+const SKEY="ptld-venture-control-v1";
+let STORE_OK=false;
+(function(){ try{ localStorage.setItem("__t","1"); localStorage.removeItem("__t"); STORE_OK=true; }catch(e){ STORE_OK=false; } })();
+function loadState(){ if(!STORE_OK)return null; try{ const s=localStorage.getItem(SKEY); return s?JSON.parse(s):null; }catch(e){ return null; } }
+function saveState(){ if(!STORE_OK)return; try{ localStorage.setItem(SKEY,JSON.stringify(STATE)); const d=document.getElementById('savedot'); if(d){d.innerHTML='<b>saved</b> '+new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});} }catch(e){} }
+let STATE=loadState()||structuredClone(SEED);
+let VIEW="dash";
+let BF={proj:"all",exec:"all",who:"all",q:""};
+let COLLAPSED=new Set();
+let DARK=false;
+const SMAP={"Live":"live","In progress":"prog","Prototype":"proto","Concept":"concept","Needs input":"input","Scope TBC":"tbc","Done":"done"};
+
+/* ---------- ICONOGRAPHY (thematic glyph per project) ---------- */
+const GLYPH={
+ vault:'<path d="M3 9 L12 3 L21 9 V21 H3 Z"/><circle cx="12" cy="14" r="3.2"/><line x1="12" y1="14" x2="12" y2="17.5"/>',
+ vinyl:'<circle cx="12" cy="12" r="9.5"/><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="0.8" fill="ink"/>',
+ bauhaus:'<circle cx="7" cy="8" r="3.4"/><path d="M14 4 L19 12 H9 Z"/><rect x="13" y="14" width="7" height="7"/>',
+ diamond:'<path d="M12 2 L21 12 L12 22 L3 12 Z"/><path d="M12 7 L16.5 12 L12 17 L7.5 12 Z" fill="none"/>',
+ star:'<path d="M12 2 L12 22 M2 12 L22 12 M5 5 L19 19 M19 5 L5 19" stroke-width="1.4"/><circle cx="12" cy="12" r="2.6" fill="col"/>',
+ hub:'<circle cx="12" cy="12" r="3"/><circle cx="12" cy="3.5" r="1.8"/><circle cx="12" cy="20.5" r="1.8"/><circle cx="3.5" cy="12" r="1.8"/><circle cx="20.5" cy="12" r="1.8"/><path d="M12 9 V5.3 M12 15 V18.7 M9 12 H5.3 M15 12 H18.7" stroke-width="1.3"/>',
+ grid:'<rect x="3" y="3" width="8" height="8"/><rect x="13" y="3" width="8" height="8" fill="none"/><rect x="3" y="13" width="8" height="8" fill="none"/><rect x="13" y="13" width="8" height="8"/>',
+ chart:'<rect x="3" y="14" width="4" height="7"/><rect x="10" y="9" width="4" height="12"/><rect x="17" y="4" width="4" height="17"/>',
+ console:'<rect x="2.5" y="6" width="19" height="12" rx="3"/><circle cx="7" cy="12" r="1.4" fill="ink"/><path d="M16 10 V14 M14 12 H18" stroke-width="1.4"/>',
+ tower:'<rect x="5" y="13" width="6" height="8"/><rect x="13" y="8" width="6" height="13"/><rect x="9" y="4" width="6" height="17" fill="none"/>',
+ moon:'<path d="M16 3 A9 9 0 1 0 16 21 A7 7 0 1 1 16 3 Z"/>',
+ steps:'<path d="M3 20 H8 V15 H13 V10 H18 V5 H21" fill="none" stroke-width="2"/>',
+ cross:'<rect x="3" y="3" width="18" height="18" fill="none"/><path d="M7 7 L17 17 M17 7 L7 17" stroke-width="2.2"/>',
+ bolt:'<path d="M13 2 L4 13 H11 L9 22 L20 10 H13 Z"/>',
+ flame:'<path d="M12 2 C8 7 6 9 6 14 a6 6 0 0 0 12 0 c0-3-2-5-3-8 -1 2-2 3-3 3 0-3 0-6 0-7 Z"/>',
+ burst:'<circle cx="12" cy="12" r="3" fill="col"/><path d="M12 2 V6 M12 18 V22 M2 12 H6 M18 12 H22 M5 5 L8 8 M16 16 L19 19 M19 5 L16 8 M8 16 L5 19" stroke-width="1.5"/>'
+};
+const GLYPH_NAMES=Object.keys(GLYPH);
+function iconSVG(name,color,size){
+ size=size||18; const body=(GLYPH[name]||GLYPH.grid).replace(/fill="col"/g,`fill="${color}"`).replace(/fill="ink"/g,'fill="currentColor"');
+ return `<span class="picon"><svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="${color}33" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round">${body}</svg></span>`;
+}
+function pIcon(p,size){ return iconSVG(p.icon||"grid",p.color,size); }
+let PROFILE_CODE=null;
+function pbar(p){ const c=completion(p); return `<span class="pwrap"><span class="pbar" style="color:${p.color}"><i style="width:${c}%;--c:${p.color}"></i></span><span class="pn">${c}%</span></span>`; }
+function nextActionLink(p){ const t=nextTask(p); return `<span class="nextlink" onclick="event.stopPropagation();gotoTask('${t?t.code:''}')">▸ ${p.smallest}</span>`; }
+function plink(code,inner){ return `<span class="plink" onclick="event.stopPropagation();openProfile('${code}')">${inner}</span>`; }
+function openProfile(code){ PROFILE_CODE=code; VIEW="profile"; renderNav(); render(); window.scrollTo(0,0); }
+let COMPANY_ID=null;
+function coById(id){ return (STATE.companies||[]).find(c=>c.id===id)||(STATE.companies||[])[0]; }
+function companyOf(p){ return coById(p.parent||"ptld"); }
+function projectsOfCo(id){ return STATE.projects.filter(p=>(p.parent||"ptld")===id); }
+function openCompany(id){ COMPANY_ID=id; VIEW="company"; renderNav(); render(); window.scrollTo(0,0); }
+function parentTag(p){ const c=companyOf(p); return c?`<span class="parenttag" onclick="event.stopPropagation();openCompany('${c.id}')">⌂ ${c.short||c.name}</span>`:''; }
+function topMicro(p){ for(const t of p.tasks){ if(t.status==="Done")continue; const i=(t.subs||[]).findIndex(s=>!s.done); if(i>=0)return {t,sub:t.subs[i],i}; } for(const t of p.tasks){ const i=(t.subs||[]).findIndex(s=>!s.done); if(i>=0)return {t,sub:t.subs[i],i}; } return null; }
+/* ---- draggable Gantt bars: hold to move, drag edges to resize ---- */
+let DRAGGED=false;
+function barClick(e,code){ if(DRAGGED){DRAGGED=false;return;} openTask(code); }
+function attachBarDrag(){ document.querySelectorAll('.bar.draggable').forEach(bar=>{ bar.onpointerdown=barDown; }); }
+function barDown(e){
+ const bar=e.currentTarget, code=bar.getAttribute('data-bar'), t=findTask(code); if(!t)return;
+ const track=bar.parentElement, tw=track.getBoundingClientRect().width, mpx=tw/12;
+ const rect=bar.getBoundingClientRect(), lx=e.clientX-rect.left;
+ const mode=e.target.classList.contains('gripL')?'l':e.target.classList.contains('gripR')?'r':(lx<14?'l':lx>rect.width-14?'r':'move');
+ const origS=t._startM, origE=t._endM, startX=e.clientX; let active=false, holdTimer=null;
+ const begin=()=>{ active=true; bar.classList.add('dragging'); try{bar.setPointerCapture(e.pointerId);}catch(_){}};
+ if(mode==='move'){ holdTimer=setTimeout(begin,200); } else { begin(); e.preventDefault(); }
+ const move=(ev)=>{ const dx=ev.clientX-startX; if(!active){ if(Math.abs(dx)>8)clearTimeout(holdTimer); return; } ev.preventDefault();
+   const dM=Math.round(dx/mpx);
+   if(mode==='move'){ const span=origE-origS; let ns=origS+dM, ne=origE+dM; if(ns<0){ns=0;ne=span;} if(ne>11){ne=11;ns=11-span;} t._startM=ns; t._endM=ne; }
+   else if(mode==='l'){ t._startM=Math.min(Math.max(0,origS+dM),origE); }
+   else { t._endM=Math.max(Math.min(11,origE+dM),origS); }
+   const span=Math.max(1,t._endM-t._startM+1);
+   bar.style.left=`calc(${t._startM}/12*100%)`; bar.style.width=`calc(${span}/12*100% - 5px)`;
+   bar.lastChild&&(bar.childNodes[2]&&(bar.childNodes[2].nodeValue=MONTHS[t._startM]+(span>1?'–'+MONTHS[t._endM]:'')));
+   DRAGGED=true;
+ };
+ const up=(ev)=>{ clearTimeout(holdTimer); document.removeEventListener('pointermove',move); document.removeEventListener('pointerup',up); bar.classList.remove('dragging'); if(active){ reRenderGantt(); saveState(); requestAnimationFrame(drawDepLines); } };
+ document.addEventListener('pointermove',move,{passive:false}); document.addEventListener('pointerup',up);
+}
+function gotoTask(code){ if(!code)return; const p=projOfTask(code); if(p)COLLAPSED.delete(p.code); VIEW="gantt"; renderNav(); render(); setTimeout(()=>{ const el=document.getElementById('row-'+code); if(el){ el.scrollIntoView({behavior:'smooth',block:'center'}); el.classList.add('flash'); setTimeout(()=>el.classList.remove('flash'),1700);} },90); }
+
+function monthIndex(ds){ if(!ds) return 11; const d=new Date(ds); let i=(d.getFullYear()-2026)*12+(d.getMonth()-5); return Math.max(0,Math.min(11,i)); }
+function daysSince(ds){ if(!ds) return 999; return Math.floor((Date.now()-new Date(ds))/86400000); }
+function today(){ return new Date().toISOString().slice(0,10); }
+function initSchedule(){ STATE.projects.forEach(p=>{ if(!p.icon)p.icon="grid"; if(!p.parent)p.parent="ptld"; p.tasks.forEach((t)=>{ if(t._endM===undefined){ t._endM=monthIndex(t.deadline); let depEnd=-1; (t.deps||[]).forEach(dc=>{const dt=findTask(dc);if(dt)depEnd=Math.max(depEnd,dt._endM!==undefined?dt._endM:monthIndex(dt.deadline));}); t._startM=Math.max(0,depEnd>=0?depEnd:t._endM-1); if(t._startM>t._endM)t._startM=t._endM; } if(t.link===undefined)t.link=""; }); }); }
+function findTask(code){ for(const p of STATE.projects){ const t=p.tasks.find(x=>x.code===code); if(t)return t; } return null; }
+function findProj(code){ return STATE.projects.find(p=>p.code===code); }
+function projOfTask(code){ return STATE.projects.find(p=>p.tasks.some(t=>t.code===code)); }
+function nextTask(p){ return p.tasks.find(t=>t.status!=="Done"&&t.status!=="Scope TBC") || p.tasks.find(t=>t.status!=="Done"); }
+function completion(p){ const tot=p.tasks.length||1; const done=p.tasks.filter(t=>t.status==="Done").length; return Math.round(done/tot*100); }
+function toast(m){ const t=document.getElementById('toast'); t.textContent=m; t.classList.add('on'); setTimeout(()=>t.classList.remove('on'),2200); }
+
+function renderNav(){
+ const views=[["dash","Dashboard"],["gantt","Gantt"],["board","Board"],["week","This Week"],["time","Time & Billing"],["crm","Team & Opps"],["knox","Vault-It Knox"]];
+ document.getElementById('nav').innerHTML=views.map(v=>`<button class="nav-btn ${VIEW===v[0]?'on':''}" onclick="go('${v[0]}')">${v[1]}</button>`).join("")+`<button class="nav-btn" style="margin-left:auto;background:var(--red);color:#fff;border-color:var(--red)" onclick="newProject()">+ New venture</button>`;
+}
+function go(v){ VIEW=v; renderNav(); render(); window.scrollTo(0,0); }
+
+/* ---------- TODAY ---------- */
+function priorityScore(p){
+ const statusW={"Needs input":100,"In progress":80,"Live":70,"Prototype":60,"Concept":40,"Done":10,"Scope TBC":5};
+ const ds=daysSince(p.touched); const cold=ds>14;
+ let score=(statusW[p.status]||30);
+ score+=Math.min((p.streak||0)*3,30);
+ score+=Math.round((p.readiness||0)*0.3);
+ if(cold) score+=(p.status==="In progress"||p.status==="Live")?25:10;
+ const t=nextTask(p); if(t&&t.deadline){ const d=new Date(t.deadline); const diff=(d-new Date())/864e5; if(diff<14&&diff>=0) score+=20; if(diff<0) score+=35; }
+ return score;
+}
+function renderToday(){
+ const active=STATE.projects.filter(p=>p.status!=="Scope TBC");
+ const ranked=[...active].sort((a,b)=>priorityScore(b)-priorityScore(a));
+ const hero=ranked[0]; const hn=hero?nextTask(hero):null;
+ let html=`<div class="nowhead">Present moment · ${new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'})} · what matters right now</div>`;
+ html+=`<div class="hero">
+   <div class="lab">★ If you do one thing today</div>
+   <h2>${hero?hero.smallest:"All clear."}</h2>
+   <div class="meta">${hero?`${hero.code} · ${hero.name}${hn?` · then: ${hn.name}`:""}`:""}</div>
+   <div class="act row">
+     ${hero?`<button class="btn y" onclick="touch('${hero.code}')">✓ Done it · log streak</button>`:""}
+     ${hn?`<button class="btn ghost" onclick="toGoogleTask('${hn.code}')">→ Google Tasks</button>`:""}
+     <button class="btn ghost" onclick="sendTodayList()">→ Push whole list</button>
+   </div></div>`;
+ html+=`<div class="mom"><div class="mom-h">${iconSVG('bolt','#f2b705',18)}<h3>Momentum — one tiny step per venture</h3><span class="sub">${active.length} live</span></div>`;
+ ranked.forEach(p=>{
+   const ds=daysSince(p.touched); const cold=ds>14; const mt=topMicro(p);
+   html+=`<div class="mrow">${plink(p.code,pIcon(p,22))}<span class="mc plink" onclick="openProfile('${p.code}')">${p.code}</span>
+     <span class="mtxt"><span class="nextlink" onclick="gotoTask('${(nextTask(p)||{}).code||''}')">${p.smallest}</span><small>${p.name}${cold?` · COLD ${ds}d`:""}</small></span>
+     <span class="mstreak">🔥${p.streak||0}</span>
+     <button class="mbtn done" onclick="touch('${p.code}')">✓</button>
+     <button class="mbtn ai" onclick="aiSuggest('${p.code}')">✦</button></div>`;
+   if(mt)html+=`<div class="micrline"><span class="ml">μ next</span><span class="mv" onclick="gotoTask('${mt.t.code}')">${mt.sub.n}</span><span class="mono muted" style="font-size:9px">↳ ${mt.t.code}</span></div>`;
+ });
+ html+=`</div>`;
+ html+=`<div class="nowdash-h">${iconSVG('grid','#1f4ed8',18)} Now Dashboard <span class="mono muted" style="font-size:10px;font-weight:400;margin-left:auto">every venture, under its parent company</span></div>`;
+ html+=dashByCompany();
+ const tbc=STATE.projects.filter(p=>p.status==="Scope TBC");
+ if(tbc.length){ html+=`<div class="card" style="margin-top:14px"><div class="card-h" style="background:#bbb"><span class="cdot" style="background:#fff"></span><h3>Scope TBC — need your one-liner</h3></div><div class="card-b row">${tbc.map(p=>`<button class="mini" onclick="openProj('${p.code}')">${pIcon(p,14)} ${p.code} ${p.name}</button>`).join("")}</div></div>`; }
+ return html;
+}
+
+/* ---------- GANTT ---------- */
+function renderGantt(){
+ const anyOpen=STATE.projects.some(p=>!COLLAPSED.has(p.code));
+ let h=`<div class="gctrls"><button class="mini" onclick="collapseAll(${anyOpen})">${anyOpen?'⊟ Collapse all':'⊞ Expand all'}</button><button class="mini" onclick="newCompany()">+ Parent company</button><span class="draghint">Hold a bar to reschedule · drag its edges to change start/end · tap to edit.</span></div>`;
+ h+=`<div id="gwrap"><div class="board" id="gboard"><div class="gantt" id="gantt"><svg class="deplines" id="deplines"></svg><div class="grow ghead"><div class="c lbl">Workstream / Task — tap to edit</div>${MONTHS.map((m,i)=>`<div class="c">${m}<span class="qy">${M_YEAR[i]}</span></div>`).join("")}</div>`;
+ STATE.companies.forEach(co=>{
+  const projs=projectsOfCo(co.id); if(!projs.length)return;
+  const cocol=SECT.has('co:'+co.id);
+  h+=`<div class="grow"><div class="cohead" onclick="toggleSect('co:${co.id}')"><span class="caret">${cocol?'▸':'▾'}</span>${iconSVG(co.icon||'grid',co.color||'#d6402c',18)}<span class="con">${co.name}</span><span class="cometa">${projs.length} ventures · ${co.type||''} · ${co.funded||''} · ${co.state||''}</span><span class="parenttag" style="margin-left:auto" onclick="event.stopPropagation();openCompany('${co.id}')">Open ↗</span></div></div>`;
+  if(cocol)return;
+  projs.forEach(p=>{
+   const col=COLLAPSED.has(p.code);
+   const open=p.tasks.filter(t=>t.status!=="Done").length, nd=p.tasks.map(t=>t.deadline).filter(Boolean).sort()[0];
+   h+=`<div class="gsec"><div class="grow"><div class="band" onclick="toggleSec('${p.code}')">
+     <span class="caret">${col?'▸':'▾'}</span>${plink(p.code,pIcon(p,18))}<h2 class="plink" onclick="event.stopPropagation();openProfile('${p.code}')">${p.code} ${p.name}</h2><span class="tag">${p.type} · ${p.pub}</span>${parentTag(p)}
+     ${col?`<span class="bandsum">${open} open · ${p.tasks.length} tasks${nd?` · next ${nd}`:''}</span>`:''}
+     ${p.github?`<a class="repo" href="${p.github}" target="_blank" onclick="event.stopPropagation()" style="margin-left:8px">Repo ↗</a>`:""}
+     <span class="rd">${p.readiness}/100</span></div></div>`;
+   if(!col){ h+=`<div class="grow"><div class="bandprog">${pbar(p)}<span class="nextlink" onclick="gotoTask('${(nextTask(p)||{}).code||''}')">▸ next: ${p.smallest}</span></div></div>`; }
+   p.tasks.forEach(t=>{
+     const span=Math.max(1,t._endM-t._startM+1);
+     const cls=(t.status==="Concept"||t.status==="Scope TBC")?" hatch":(t.status==="Done"?" done":"");
+     h+=`<div class="grow trow ${col?'hidden':''}" id="row-${t.code}" data-sec="${p.code}"><div class="lbl" onclick="openTask('${t.code}')">
+       <div class="tnm">${t.code} · ${t.name}</div>
+       <div class="row"><span class="badge b-own">${t.who}</span>${t.deps&&t.deps.length?`<span class="badge b-dep">⛓ ${t.deps.join(' ')}</span>`:""}${t.who==="Claude Code"?'<span class="badge b-code">CODE</span>':""}${t.link?`<a class="linkbadge" href="${t.link}" target="_blank" onclick="event.stopPropagation()">FILE ↗</a>`:""}</div>
+     </div><div class="track">${MONTHS.map(()=>'<div class="gc"></div>').join("")}
+       <div class="bar draggable${cls}" data-bar="${t.code}" style="left:calc(${t._startM}/12*100%);width:calc(${span}/12*100% - 5px);background:${p.color}33;border-color:${p.color}" onclick="barClick(event,'${t.code}')"><span class="gripL"></span><span class="sdot ${SMAP[t.status]}"></span>${MONTHS[t._startM]}${span>1?'–'+MONTHS[t._endM]:''}<span class="gripR"></span></div></div></div>`;
+   });
+   h+=`<div class="grow ${col?'hidden':''}" data-sec="${p.code}"><div class="lbl" style="padding-left:20px"><button class="mini" onclick="addTask('${p.code}')">+ Add task to ${p.code}</button></div><div class="track">${MONTHS.map(()=>'<div class="gc" style="min-height:30px"></div>').join("")}</div></div></div>`;
+  });
+ });
+ h+=`</div></div></div>`;
+ return h;
+}
+function reRenderGantt(){ const sl=(document.getElementById('gboard')||{}).scrollLeft||0; render(); const b=document.getElementById('gboard'); if(b)b.scrollLeft=sl; }
+function toggleSec(code){ if(COLLAPSED.has(code))COLLAPSED.delete(code); else COLLAPSED.add(code); reRenderGantt(); }
+function collapseAll(close){ if(close)STATE.projects.forEach(p=>COLLAPSED.add(p.code)); else COLLAPSED.clear(); reRenderGantt(); }
+function drawDepLines(){
+ const gantt=document.getElementById('gantt'); const svg=document.getElementById('deplines'); if(!gantt||!svg)return;
+ const g=gantt.getBoundingClientRect();
+ svg.style.width=gantt.scrollWidth+'px'; svg.style.height=gantt.scrollHeight+'px';
+ let paths="";
+ STATE.projects.forEach(p=>{
+   p.tasks.forEach(t=>{
+     (t.deps||[]).forEach(dc=>{
+       if(!dc.startsWith(p.code))return;
+       const a=document.querySelector(`[data-bar="${dc}"]`), b=document.querySelector(`[data-bar="${t.code}"]`);
+       if(!a||!b)return; const ar=a.getBoundingClientRect(), br=b.getBoundingClientRect();
+       if(ar.width===0||br.width===0)return;
+       const xP=ar.right-g.left, yP=ar.top-g.top+ar.height/2;   // predecessor right-edge mid
+       const xS=br.left-g.left,  yS=br.top-g.top+br.height/2;   // successor left-edge mid
+       const barH=ar.height, stub=9;
+       let d;
+       if(xS-14 > xP){ // successor clearly to the right: single vertical channel just left of it
+         const cx=xS-12; d=`M${xP} ${yP} H${cx} V${yS} H${xS}`;
+       } else { // same column / overlap: route through the gutter beneath the predecessor row
+         const gx=xP+stub, ymid=yP+barH/2+6, lx=Math.max(2,xS-12);
+         d=`M${xP} ${yP} H${gx} V${ymid} H${lx} V${yS} H${xS}`;
+       }
+       paths+=`<path d="${d}" fill="none" stroke="${p.color}" stroke-width="1.7" stroke-dasharray="4 2" opacity="0.9"/>`;
+       paths+=`<circle cx="${xP}" cy="${yP}" r="2.8" fill="${p.color}" stroke="currentColor" stroke-width="1"/>`;
+       paths+=`<path d="M${xS-6} ${yS-4} L${xS} ${yS} L${xS-6} ${yS+4} Z" fill="${p.color}" stroke="${p.color}"/>`;
+     });
+   });
+ });
+ svg.innerHTML=paths;
+}
+
+/* ---------- BOARD (filterable) ---------- */
+function renderBoard(){
+ const cols=["Needs input","In progress","Prototype","Concept","Live","Done"];
+ const projOpts=`<option value="all">All ventures</option>`+STATE.projects.map(p=>`<option value="${p.code}" ${BF.proj===p.code?'selected':''}>${p.code} ${p.name}</option>`).join("");
+ const execOpts=`<option value="all">All categories</option>`+STATE.execTypes.map(e=>`<option ${BF.exec===e?'selected':''}>${e}</option>`).join("");
+ const whoSet=[...new Set([].concat(...STATE.projects.map(p=>p.tasks.map(t=>t.who))))];
+ const whoOpts=`<option value="all">All owners</option>`+whoSet.map(w=>`<option ${BF.who===w?'selected':''}>${w}</option>`).join("");
+ if(BF.micro===undefined)BF.micro=true;
+ let h=`<div class="fbar"><span class="fl">Filter</span>
+   <select onchange="BF.proj=this.value;render()">${projOpts}</select>
+   <select onchange="BF.exec=this.value;render()">${execOpts}</select>
+   <select onchange="BF.who=this.value;render()">${whoOpts}</select>
+   <input type="text" placeholder="search…" value="${BF.q}" oninput="BF.q=this.value;render()">
+   <label class="microtoggle"><input type="checkbox" ${BF.micro?'checked':''} onchange="BF.micro=this.checked;render()"> Micro tasks</label>
+   <span class="clear" onclick="BF={proj:'all',exec:'all',who:'all',q:'',micro:true};render()">Clear</span></div>`;
+ const matchP=p=>(BF.proj==="all"||p.code===BF.proj);
+ const all=[]; STATE.projects.forEach(p=>p.tasks.forEach(t=>all.push({t,p})));
+ const filt=all.filter(({t,p})=>matchP(p)&&(BF.exec==="all"||t.exec===BF.exec)&&(BF.who==="all"||t.who===BF.who)&&(!BF.q||(t.name+t.code).toLowerCase().includes(BF.q.toLowerCase())));
+ // micro tasks (subtasks): incomplete go into parent's column, done go into Done
+ const micro=[]; if(BF.micro){ STATE.projects.forEach(p=>{ if(!matchP(p))return; p.tasks.forEach(t=>{ if(BF.exec!=="all"&&t.exec!==BF.exec)return; if(BF.who!=="all"&&t.who!==BF.who)return; (t.subs||[]).forEach((s,i)=>{ if(BF.q&&!(s.n.toLowerCase().includes(BF.q.toLowerCase())))return; micro.push({s,i,t,p,col:s.done?"Done":t.status}); }); }); }); }
+ h+=`<div class="kanban">`;
+ cols.forEach(c=>{
+   const items=filt.filter(x=>x.t.status===c);
+   const ms=micro.filter(x=>x.col===c);
+   h+=`<div class="kcol"><h4>${c}<span>${items.length}${ms.length?` · ${ms.length}μ`:''}</span></h4><div class="kb">`;
+   items.forEach(({t,p})=>{ const ms2=micro.filter(x=>x.t.code===t.code&&x.col===c);
+     h+=`<div class="ktask" onclick="openTask('${t.code}')" style="border-left:5px solid ${p.color}"><div class="kc row" style="gap:5px">${pIcon(p,13)} ${t.code} · ${p.name}</div><div class="kn">${t.name}</div><div class="row" style="margin-top:4px"><span class="badge b-own">${t.exec}</span>${t.deadline?`<span class="mono muted" style="font-size:9px">${t.deadline}</span>`:""}${t.link?'<span class="linkbadge">FILE</span>':""}${(t.subs&&t.subs.length)?`<span class="mono muted" style="font-size:9px">${t.subs.filter(s=>s.done).length}/${t.subs.length}μ</span>`:''}</div></div>`;
+     ms2.forEach(({s,i,t})=>{ h+=`<div class="ktask micro" onclick="event.stopPropagation();openTask('${t.code}')"><div class="row" style="gap:5px"><input type="checkbox" ${s.done?'checked':''} onclick="event.stopPropagation();toggleSub('${t.code}',${i})"><span class="kn">${s.n}</span></div><div class="mp">↳ ${t.code}${s.d?` · ${s.d}`:''}</div></div>`; });
+   });
+   // orphan micro tasks whose parent isn't in this column (e.g. done subs under a non-done parent)
+   micro.filter(x=>x.col===c && !items.some(it=>it.t.code===x.t.code)).forEach(({s,i,t,p})=>{ h+=`<div class="ktask micro" onclick="event.stopPropagation();openTask('${t.code}')" style="border-left:4px solid ${p.color}"><div class="row" style="gap:5px"><input type="checkbox" ${s.done?'checked':''} onclick="event.stopPropagation();toggleSub('${t.code}',${i})"><span class="kn">${s.n}</span></div><div class="mp">↳ ${t.code} ${p.name}${s.d?` · ${s.d}`:''}</div></div>`; });
+   h+=`</div></div>`;
+ });
+ h+=`</div>`;
+ return h;
+}
+
+/* ---------- DASHBOARD ---------- */
+/* ---------- THIS WEEK (momentum) ---------- */
+function renderWeek(){
+ const now=new Date(); now.setHours(0,0,0,0);
+ const in7=new Date(now); in7.setDate(in7.getDate()+7);
+ const items=[];
+ STATE.projects.forEach(p=>{ p.tasks.forEach(t=>{
+   if(t.status==="Done")return;
+   if(t.deadline){ const d=new Date(t.deadline); items.push({d,date:t.deadline,p,t,label:t.name,sub:false}); }
+   (t.subs||[]).forEach(s=>{ if(s.d&&!s.done){ items.push({d:new Date(s.d),date:s.d,p,t,label:`${t.name} → ${s.n}`,sub:true}); } });
+ }); });
+ const overdue=items.filter(x=>x.d<now).sort((a,b)=>a.d-b.d);
+ const todayI=items.filter(x=>x.d.getTime()===now.getTime());
+ const soon=items.filter(x=>x.d>now&&x.d<=in7).sort((a,b)=>a.d-b.d);
+ const hottest=[...STATE.projects].sort((a,b)=>(b.streak||0)-(a.streak||0))[0];
+ const totStreak=STATE.projects.reduce((s,p)=>s+(p.streak||0),0);
+ let h=`<div class="nowhead">This week · ${overdue.length} overdue · ${todayI.length} today · ${soon.length} in the next 7 days</div>`;
+ h+=`<div class="card"><div class="card-h" style="background:var(--yellow)"><span class="cdot" style="background:#fff"></span><h3>Momentum bank</h3><span class="code">${totStreak} total streak days${hottest&&hottest.streak?` · hottest ${hottest.name} 🔥${hottest.streak}`:''}</span></div></div>`;
+ const block=(title,arr,color)=>{
+   if(!arr.length)return `<div class="card"><div class="card-h"><span class="cdot" style="background:${color}"></span><h3>${title}</h3><span class="code">clear</span></div></div>`;
+   let b=`<div class="card"><div class="card-h"><span class="cdot" style="background:${color}"></span><h3>${title}</h3><span class="code">${arr.length}</span></div><div class="card-b" style="padding:0">`;
+   arr.forEach(x=>{ b+=`<div class="mrow"><span class="mono" style="font-size:9px;color:var(--muted);width:70px">${x.date}</span>${pIcon(x.p,18)}<span class="mtxt" style="font-size:13px">${x.label}<small>${x.p.code} ${x.p.name}${x.sub?' · sub-task':''}</small></span><button class="mbtn" onclick="openTask('${x.t.code}')">Open</button><button class="mbtn" onclick="toGoogleTask('${x.t.code}')">→ GTasks</button></div>`; });
+   b+=`</div></div>`; return b;
+ };
+ h+=block("Overdue — clear these first",overdue,"var(--red)");
+ h+=block("Today",todayI,"var(--blue)");
+ h+=block("Next 7 days",soon,"var(--green)");
+ return h;
+}
+/* ---------- TIME TRACKING + BILLING ---------- */
+function rateOf(skill){ const r=(STATE.rates||[]).find(x=>x.skill===skill); return r?r.rate:0; }
+function entryMins(e){ if(e.mins!=null&&e.end)return e.mins; const end=e.end?new Date(e.end):new Date(); return Math.max(0,Math.round((end-new Date(e.start))/60000)); }
+function entryValue(e){ return entryMins(e)/60*rateOf(e.skill); }
+function activeEntry(){ return (STATE.time||[]).find(e=>!e.end); }
+function fmtHM(mins){ const h=Math.floor(mins/60),m=mins%60; return `${h}h ${String(m).padStart(2,'0')}m`; }
+function fmtClock(secs){ const h=Math.floor(secs/3600),m=Math.floor(secs%3600/60),s=Math.floor(secs%60); return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`; }
+function gbp(n){ return "£"+(Math.round(n*100)/100).toLocaleString('en-GB',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+
+function renderTimebar(){
+ const bar=document.getElementById('timebar'); if(!bar)return;
+ const e=activeEntry();
+ if(e){ const p=findProj(e.proj); const secs=(Date.now()-new Date(e.start))/1000; const val=entryValue(e);
+   bar.innerHTML=`<span class="pulse"></span><span class="live" id="liveclock">${fmtClock(secs)}</span><span class="ctx">${p?p.code+' '+p.name:''} · ${e.skill} · ${gbp(rateOf(e.skill))}/hr</span><span class="val" id="liveval">${gbp(val)}</span><button class="tbtn out" onclick="clockOut()">■ Clock out</button>`;
+ } else {
+   bar.innerHTML=`<span class="pulse" style="background:#5a564a;animation:none"></span><span class="ctx">No timer running.</span><button class="tbtn in" onclick="clockInModal()">▶ Clock in</button>`;
+ }
+}
+function tickTimer(){ const e=activeEntry(); if(!e)return; const lc=document.getElementById('liveclock'); const lv=document.getElementById('liveval'); if(lc)lc.textContent=fmtClock((Date.now()-new Date(e.start))/1000); if(lv)lv.textContent=gbp(entryValue(e)); }
+
+function renderTime(){
+ const T=STATE.time||[];
+ const totMins=T.reduce((s,e)=>s+entryMins(e),0);
+ const totVal=T.reduce((s,e)=>s+(e.billable===false?0:entryValue(e)),0);
+ const now=new Date(); const wkStart=new Date(now); wkStart.setDate(now.getDate()-((now.getDay()+6)%7)); wkStart.setHours(0,0,0,0);
+ const wk=T.filter(e=>new Date(e.start)>=wkStart); const wkMins=wk.reduce((s,e)=>s+entryMins(e),0); const wkVal=wk.reduce((s,e)=>s+(e.billable===false?0:entryValue(e)),0);
+ let h=`<div class="nowhead">Time & billing · log hours, set your rate by skill, estimate what to invoice</div>`;
+ h+=`<div class="tsum">
+   <div class="s"><div class="v">${fmtHM(totMins)}</div><div class="l">total tracked</div></div>
+   <div class="s"><div class="v">${gbp(totVal)}</div><div class="l">billable value</div></div>
+   <div class="s"><div class="v">${fmtHM(wkMins)}</div><div class="l">this week</div></div>
+   <div class="s"><div class="v">${gbp(wkVal)}</div><div class="l">this week value</div></div></div>`;
+ // rate card
+ h+=`<div class="ratecard"><div class="card-h"><span class="cdot" style="background:var(--yellow)"></span><h3>Rate card — your value per hour by skill</h3><span class="code">edit freely</span></div><div style="padding:6px 0">`;
+ (STATE.rates||[]).forEach((r,i)=>{ h+=`<div class="rr"><input class="sk" value="${esc(r.skill)}" onchange="setRate(${i},'skill',this.value)"><span class="gbp">£</span><input class="rt" type="number" value="${r.rate}" onchange="setRate(${i},'rate',this.value)"><span class="mono muted" style="font-size:10px">/hr</span><span class="del" onclick="delRate(${i})" style="cursor:pointer;color:var(--red);font-weight:700;font-family:Space Mono;border:1.5px solid var(--red);padding:2px 6px;background:#fff">✕</span></div>`; });
+ h+=`<div class="rr"><button class="mini" onclick="addRate()">+ Add skill</button><span class="mono muted" style="font-size:10px;margin-left:8px">Starting figures benchmarked to UK senior freelance creative rates. Calibrate to your market and the client.</span></div></div></div>`;
+ // per-project rollup
+ h+=`<div class="card"><div class="card-h"><span class="cdot" style="background:var(--blue)"></span><h3>By venture — hours to bill</h3><button class="mini" onclick="addTimeModal()" style="margin-left:auto">+ Log time manually</button></div><div class="ktable"><table class="proj-roll"><thead><tr><th>Venture</th><th style="text-align:right">Hours</th><th style="text-align:right">Billable value</th><th style="text-align:right">Entries</th></tr></thead><tbody>`;
+ STATE.projects.forEach(p=>{ const es=T.filter(e=>e.proj===p.code); if(!es.length)return; const mins=es.reduce((s,e)=>s+entryMins(e),0); const val=es.reduce((s,e)=>s+(e.billable===false?0:entryValue(e)),0);
+   h+=`<tr><td>${pIcon(p,14)} ${p.code} ${p.name}</td><td class="num">${fmtHM(mins)}</td><td class="num">${gbp(val)}</td><td class="num">${es.length}</td></tr>`; });
+ if(!T.length)h+=`<tr><td colspan="4" class="muted" style="font-style:italic">No time logged yet. Clock in from the bar at the bottom, or log manually.</td></tr>`;
+ h+=`</tbody></table></div></div>`;
+ // entries log
+ if(T.length){ h+=`<div class="card"><div class="card-h"><span class="cdot" style="background:var(--green)"></span><h3>Entries</h3><span class="code">${T.length} · tap to edit</span></div><div class="ktable"><table class="proj-roll"><thead><tr><th>Date</th><th>Venture</th><th>Skill</th><th style="text-align:right">Dur</th><th style="text-align:right">Value</th><th>Who</th><th>Bill</th></tr></thead><tbody>`;
+   [...T].sort((a,b)=>new Date(b.start)-new Date(a.start)).forEach(e=>{ const p=findProj(e.proj); h+=`<tr onclick="editTime('${e.id}')" style="cursor:pointer"><td class="mono" style="font-size:10px">${e.start.slice(0,10)}${!e.end?' <span class="badge" style="background:var(--red);color:#fff;border-color:var(--red)">RUNNING</span>':''}</td><td>${p?p.code:''} ${p?p.name:''}</td><td style="font-size:11px">${e.skill}</td><td class="num">${fmtHM(entryMins(e))}</td><td class="num">${gbp(entryValue(e))}</td><td class="mono" style="font-size:10px">${e.who||''}</td><td><span class="billdot ${e.billable===false?'n':'y'}"></span></td></tr>`; });
+   h+=`</tbody></table></div></div>`; }
+ return h;
+}
+
+function ring(v,color){ const r=20,c=2*Math.PI*r,off=c-(v/100)*c; return `<svg width="54" height="54" viewBox="0 0 54 54"><circle class="rtrack" cx="27" cy="27" r="${r}" fill="none" stroke-width="6"/><circle cx="27" cy="27" r="${r}" fill="none" stroke="${color}" stroke-width="6" stroke-dasharray="${c}" stroke-dashoffset="${off}" transform="rotate(-90 27 27)"/></svg>`; }
+function dashCard(p){ const t=nextTask(p);
+ return `<div class="dcard" style="border-top:6px solid ${p.color}">
+     <div class="row">${plink(p.code,pIcon(p,20))}<span class="mono muted plink" style="font-size:10px;font-weight:700" onclick="openProfile('${p.code}')">${p.code}</span>${parentTag(p)}<span class="sdot ${SMAP[p.status]}" style="margin-left:auto"></span></div>
+     <div class="dn plink" onclick="openProfile('${p.code}')">${p.name}</div>
+     <div class="ring">${ring(p.readiness,p.color)}<div><div class="rv">${p.readiness}</div><div class="rl">readiness /100</div></div></div>
+     <div class="pwrap" style="margin-top:2px">${pbar(p)}<span class="mono muted" style="font-size:9px">tasks done</span></div>
+     <div class="dmeta">Stage: <b>${p.pub}</b> · ${p.status}<br>Type: ${p.type} · Deadline: ${p.deadline||"—"}</div>
+     <div style="border-left:3px solid ${p.color};padding-left:8px"><div class="mono muted" style="font-size:9px;text-transform:uppercase">Next smallest action</div><span class="nextlink" onclick="gotoTask('${(t||{}).code||''}')">▸ ${p.smallest}</span></div>
+     <div class="row"><button class="mini" onclick="openProfile('${p.code}')">Profile</button><button class="mini ai" onclick="aiSuggest('${p.code}')">✦ AI next</button>${p.github?`<a class="repo" href="${p.github}" target="_blank">Repo ↗</a>`:""}</div></div>`;
+}
+function dashByCompany(){
+ let h="";
+ STATE.companies.forEach(co=>{
+   const projs=projectsOfCo(co.id).sort((a,b)=>b.readiness-a.readiness); if(!projs.length)return;
+   const cocol=SECT.has('co:'+co.id);
+   const val=projs.reduce((s,p)=>s+timeForProject(p.code).val,0);
+   const tasks=projs.reduce((s,p)=>s+p.tasks.length,0);
+   const avg=Math.round(projs.reduce((s,p)=>s+p.readiness,0)/projs.length);
+   h+=`<div class="cogroup"><div class="coband-d" onclick="toggleSect('co:${co.id}')"><span class="caret">${cocol?'▸':'▾'}</span>${iconSVG(co.icon||'grid',co.color||'#d6402c',20)}<span class="con">${co.name}</span><button class="add" onclick="event.stopPropagation();openCompany('${co.id}')">Company profile ↗</button></div>
+     <div class="codet"><div class="d"><div class="l">Type</div><div class="v">${co.type||'—'}</div></div><div class="d"><div class="l">Funding</div><div class="v">${co.funded||'—'}</div></div><div class="d"><div class="l">State</div><div class="v">${co.state||'—'}</div></div><div class="d"><div class="l">Ventures</div><div class="v">${projs.length}</div></div><div class="d"><div class="l">Avg readiness</div><div class="v">${avg}/100</div></div><div class="d"><div class="l">Billable logged</div><div class="v">${gbp(val)}</div></div></div>`;
+   if(!cocol)h+=`<div class="dgrid" style="padding:12px">${projs.map(dashCard).join("")}</div>`;
+   h+=`</div>`;
+ });
+ return h;
+}
+function renderDash(){
+ const tot=STATE.projects.length, live=STATE.projects.filter(p=>p.status==="Live").length;
+ const avg=Math.round(STATE.projects.reduce((s,p)=>s+p.readiness,0)/tot);
+ const active=STATE.projects.filter(p=>p.status!=="Scope TBC");
+ const ranked=[...active].sort((a,b)=>priorityScore(b)-priorityScore(a));
+ const hero=ranked[0]; const hn=hero?nextTask(hero):null;
+ let h=`<div class="nowhead">Dashboard · ${new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'})} · ${tot} ventures · ${live} live · avg readiness ${avg}/100</div>`;
+ h+=`<div class="hero">
+   <div class="lab">★ If you do one thing today</div>
+   <h2>${hero?hero.smallest:"All clear."}</h2>
+   <div class="meta">${hero?`${hero.code} · ${hero.name}${hn?` · then: ${hn.name}`:""}`:`${""}`}</div>
+   <div class="act row">
+     ${hero?`<button class="btn y" onclick="touch('${hero.code}')">&#10003; Done it · log streak</button>":""}
+     ${hn?`<button class="btn ghost" onclick="toGoogleTask('${hn.code}')">→ Google Tasks</button>":""}
+     <button class="btn ghost" onclick="sendTodayList()">→ Push whole list</button>
+   </div></div>`;
+ h+=`<div class="mom"><div class="mom-h">${iconSVG('bolt','#f2b705',18)}<h3>Momentum — one tiny step per venture</h3><span class="sub">${active.length} live</span></div>`;
+ ranked.forEach(p=>{
+   const ds=daysSince(p.touched); const cold=ds>14; const mt=topMicro(p);
+   h+=`<div class="mrow">${plink(p.code,pIcon(p,22))}<span class="mc plink" onclick="openProfile('${p.code}')">${p.code}</span>
+     <span class="mtxt"><span class="nextlink" onclick="gotoTask('${(nextTask(p)||{}).code||''}')">${p.smallest}</span><small>${p.name}${cold?` · COLD ${ds}d`:""}</small></span>
+     <span class="mstreak">🔥${p.streak||0}</span>
+     <button class="mbtn done" onclick="touch('${p.code}')">&#10003;</button>
+     <button class="mbtn ai" onclick="aiSuggest('${p.code}')">❆</button></div>`;
+   if(mt)h+=`<div class="micrline"><span class="ml">μ next</span><span class="mv" onclick="gotoTask('${mt.t.code}')">${mt.sub.n}</span><span class="mono muted" style="font-size:9px">↳ ${mt.t.code}</span></div>`;
+ });
+ h+=`</div>`;
+ h+=`<div class="nowdash-h">${iconSVG('grid','#1f4ed8',18)} Portfolio — grouped by parent company <span class="mono muted" style="font-size:10px;font-weight:400;margin-left:auto">every venture, under its parent company</span></div>`;
+ h+=dashByCompany();
+ const tbc=STATE.projects.filter(p=>p.status==="Scope TBC");
+ if(tbc.length){ h+=`<div class="card" style="margin-top:14px"><div class="card-h" style="background:#bbb"><span class="cdot" style="background:#fff"></span><h3>Scope TBC — need your one-liner</h3></div><div class="card-b row">${tbc.map(p=>`<button class="mini" onclick="openProj('${p.code}')">${pIcon(p,14)} ${p.code} ${p.name}</button>`).join("")}</div></div>`; }
+ return h;
+}
+/* ---------- KNOX ---------- */
+function renderKnox(){
+ let h=`<div class="convention"><b>VAULT-IT KNOX — IP & ASSET REGISTER</b><br>
+   Index and link only. Real files stay in your encrypted storage (VeraCrypt). <b style="color:var(--red)">SECRET items (keys, seeds, passwords) are never stored here — only referenced.</b><br><br>
+   <b>File-reference convention (JSP 441-informed):</b><br>
+   <span class="ex">ProjectRef _ EXEC _ DOCTYPE _ ShortTitle _ YYYYMMDD _ vX.Y _ CLASS</span><br>
+   Versioning v0.1 draft to v1.0 approved · protective marking with formal review · retention reviewed at the 20-year point (PRA principle).</div>`;
+ const groups={}; STATE.knox.forEach(k=>{(groups[k.proj]=groups[k.proj]||[]).push(k);});
+ h+=`<div class="knox-h"><span class="mono muted" style="font-size:11px">${STATE.knox.length} registered items</span><button class="mini" onclick="addKnox()">+ Register a document</button></div>`;
+ h+=`<div class="ktable"><table><thead><tr><th>File reference</th><th>Title</th><th>Type</th><th>Class</th><th>Location / link</th><th>Note</th></tr></thead><tbody>`;
+ Object.keys(groups).sort().forEach(pc=>{
+   const pj=findProj(pc); const nm=pj?pj.name:(pc==="ALL"?"All projects":pc); const col=SECT.has('knox:'+pc);
+   h+=`<tr style="background:var(--paper2)" class="cclick" onclick="toggleSect('knox:${pc}')"><td colspan="6" class="mono" style="font-weight:700;font-size:10px"><span class="caret">${col?'▸':'▾'}</span> ${pj?pIcon(pj,14):""} ${pc} · ${nm} <span class="muted">(${groups[pc].length})</span></td></tr>`;
+   if(!col)groups[pc].forEach(k=>{
+     const clsKey=k.cls==="OFFICIAL-SENSITIVE"?"OS":k.cls;
+     const loc=k.loc.startsWith("http")?`<a class="repo" href="${k.loc}" target="_blank">OPEN ↗</a>`:k.loc;
+     h+=`<tr><td class="ref">${k.ref}</td><td>${k.title}</td><td class="mono" style="font-size:10px">${k.type}</td><td><span class="cls ${clsKey}">${k.cls}</span></td><td style="font-size:11px">${loc}</td><td style="font-size:11px" class="muted">${k.note||""}</td></tr>`;
+   });
+ });
+ h+=`</tbody></table></div>`;
+ return h;
+}
+
+/* ---------- RENDER ROUTER ---------- */
+function render(){
+ const app=document.getElementById('app');
+ let v="";
+ if(VIEW==="today")v=renderToday();
+ else if(VIEW==="gantt")v=renderGantt()+legend();
+ else if(VIEW==="board")v=renderBoard();
+ else if(VIEW==="week")v=renderWeek();
+ else if(VIEW==="time")v=renderTime();
+ else if(VIEW==="dash")v=renderDash();
+ else if(VIEW==="crm")v=renderCRM();
+ else if(VIEW==="profile")v=renderProfile();
+ else if(VIEW==="company")v=renderCompany();
+ else if(VIEW==="knox")v=renderKnox();
+ app.innerHTML=v;
+ renderTimebar(); saveState();
+ document.getElementById('foot').innerHTML=`<b>Source-of-truth:</b> Claude Code repo &gt; Claude Project &gt; chat. <b>GitHub:</b> Vault-It → FetaPit/Pareto- · SUB-Terrainian → FetaPit/SUB-Terrainian · Redshift → FetaPit/Project-Redshift.<br><b>Blocked:</b> SUB-Terrainian needs fetch_v3.py recovered into artwork/fetch.py (26.002.01). <b>Persistence:</b> autosaves once hosted on GitHub Pages; in this preview it is in-memory, so Export often.`;
+ if(VIEW==="gantt"){ const b=document.getElementById('gboard'); if(b)b.onscroll=()=>requestAnimationFrame(drawDepLines); requestAnimationFrame(()=>requestAnimationFrame(drawDepLines)); attachBarDrag(); }
+}
+window.addEventListener('resize',()=>{ if(VIEW==="gantt")requestAnimationFrame(drawDepLines); });
+function legend(){ return `<div class="legend"><span class="li"><span class="sdot live"></span>Live</span><span class="li"><span class="sdot prog"></span>In progress</span><span class="li"><span class="sdot proto"></span>Prototype</span><span class="li"><span class="sdot concept"></span>Concept</span><span class="li"><span class="sdot input"></span>Needs input</span><span class="li"><span class="sdot tbc"></span>Scope TBC</span><span class="li" style="margin-left:auto"><svg width="22" height="12"><path d="M1 6 H10 V2 H16" fill="none" stroke="#16140f" stroke-width="1.6" stroke-dasharray="3 2"/><circle cx="1" cy="6" r="2.4" fill="#16140f"/></svg> dependency link</span></div>`; }
+
+/* ---------- ACTIONS ---------- */
+function touch(code){ const p=findProj(code); if(!p)return; if(p.touched!==today()){p.streak=(p.streak||0)+1;} p.touched=today(); toast(`🔥 ${p.name} streak ${p.streak} · ${today()}`); render(); }
+function toGoogleTask(code){ const t=findTask(code); const p=projOfTask(code); if(!t)return; const line=`[${t.code}] ${t.name}${t.deadline?` (due ${t.deadline})`:""} — ${p.name}`; copy(line); window.open("https://tasks.google.com/","_blank"); toast("Task copied — paste into Google Tasks"); }
+function sendTodayList(){ const lines=STATE.projects.filter(p=>p.status!=="Scope TBC").map(p=>{const t=nextTask(p);return t?`[${t.code}] ${t.name}${t.deadline?` (due ${t.deadline})`:""}`:null;}).filter(Boolean); copy(lines.join("\n")); window.open("https://tasks.google.com/","_blank"); toast(`${lines.length} next-actions copied for Google Tasks`); }
+function toCalendar(code){ const t=findTask(code); if(!t||!t.deadline)return toast("No deadline set"); const d=t.deadline.replace(/-/g,""); const nd=new Date(t.deadline);nd.setDate(nd.getDate()+1);const dn=nd.toISOString().slice(0,10).replace(/-/g,""); const url=`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent('['+t.code+'] '+t.name)}&dates=${d}/${dn}&details=${encodeURIComponent('PT Live Design · '+(projOfTask(code)?.name||''))}`; window.open(url,"_blank"); toast("Opening Google Calendar"); }
+function copy(txt){ try{navigator.clipboard.writeText(txt);}catch(e){ const ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');}catch(_){}ta.remove(); } }
+
+async function aiSuggest(code){
+ const p=findProj(code); if(!p)return; toast("✦ Asking Claude…");
+ const tlist=p.tasks.map(t=>`${t.code} ${t.name} [${t.status}]`).join("; ");
+ const prompt=`You are advising Pete, acting as both a top-level software engineer and a Chief Commercial Officer. Project: "${p.name}" — ${p.one}. Current tasks: ${tlist}. Their current smallest action is: "${p.smallest}". Suggest ONE new, even smaller, concrete physical next action doable in under 15 minutes that moves the venture toward shipping or revenue. Weigh both technical leverage and commercial value. Reply with ONLY the action sentence, under 20 words, no preamble, no em dashes.`;
+ try{
+   const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,messages:[{role:"user",content:prompt}]})});
+   const d=await r.json(); const txt=(d.content||[]).filter(x=>x.type==="text").map(x=>x.text).join(" ").trim();
+   if(txt){ p.smallest=txt.replace(/^["']|["']$/g,""); toast("✦ New smallest action set"); render(); } else throw new Error("empty");
+ }catch(e){ const t=nextTask(p); p.smallest=t&&t.subs&&t.subs.length?`Do just the first step: ${t.subs[0].n}.`:(t?`Open ${t.code} and spend 10 minutes only on: ${t.name}.`:"Pick any task and name its first 10-minute step."); toast("Offline — set a heuristic action"); render(); }
+}
+
+/* ---------- MODALS ---------- */
+function closeModal(){ document.getElementById('scrim').classList.remove('on'); }
+function openScrim(html){ document.getElementById('modal').innerHTML=html; document.getElementById('scrim').classList.add('on'); }
+
+function openTask(code){
+ const t=findTask(code); const p=projOfTask(code); if(!t)return;
+ const opts=(arr,sel)=>arr.map(o=>`<option ${o===sel?'selected':''}>${o}</option>`).join("");
+ const monthOpts=sel=>MONTHS.map((m,i)=>`<option value="${i}" ${i===sel?'selected':''}>${m} ${M_YEAR[i]}</option>`).join("");
+ openScrim(`<div class="modal-h">${pIcon(p,18)}<h3>${t.code}</h3><span class="x" onclick="closeModal()">✕</span></div>
+ <div class="modal-b">
+  <div class="fld"><label>Task name</label><input id="f-name" value="${esc(t.name)}"></div>
+  <div class="fld two"><div><label>Execution category</label><select id="f-exec">${opts(STATE.execTypes,t.exec)}</select></div><div><label>Status (state of play)</label><select id="f-status">${opts(STATE.statuses,t.status)}</select></div></div>
+  <div class="fld two"><div><label>Owner</label><input id="f-who" value="${esc(t.who)}"></div><div><label>Deadline</label><input type="date" id="f-deadline" value="${t.deadline||''}"></div></div>
+  <div class="fld two"><div><label>Start month</label><select id="f-start">${monthOpts(t._startM)}</select></div><div><label>End month</label><select id="f-end">${monthOpts(t._endM)}</select></div></div>
+  <div class="fld"><label>Depends on (space-separated codes — same-project deps draw link nodes)</label><input id="f-deps" value="${(t.deps||[]).join(' ')}" placeholder="26.001.02 26.003.01"></div>
+  <div class="fld"><label>Reference / file link (repo, doc, Drive, Canva…)</label><input id="f-link" value="${esc(t.link||'')}" placeholder="https://…"></div>
+  <div class="fld"><label>Sub-tasks (individual deadlines)</label><div id="subs">${(t.subs||[]).map((s,i)=>subRow(s,i)).join("")}</div><button class="mini" onclick="addSub()">+ Sub-task</button></div>
+ </div>
+ <div class="modal-f"><button class="btn r" onclick="saveTask('${code}')">Save</button><button class="btn y" onclick="toGoogleTask('${code}')">→ GTasks</button><button class="btn b" onclick="toCalendar('${code}')">→ Calendar</button><button class="btn" onclick="delTask('${code}')">Delete</button></div>`);
+}
+function subRow(s,i){ return `<div class="subrow" data-i="${i}"><input type="checkbox" ${s.done?'checked':''} class="s-done"><input type="text" class="s-n" value="${esc(s.n)}"><input type="date" class="s-d" value="${s.d||''}"><span class="del" onclick="this.parentNode.remove()">✕</span></div>`; }
+function addSub(){ document.getElementById('subs').insertAdjacentHTML('beforeend',subRow({n:"",d:"",done:false},Date.now())); }
+function collectSubs(){ return [...document.querySelectorAll('#subs .subrow')].map(r=>({n:r.querySelector('.s-n').value,d:r.querySelector('.s-d').value,done:r.querySelector('.s-done').checked})).filter(s=>s.n.trim()); }
+function saveTask(code){
+ const t=findTask(code); if(!t)return;
+ t.name=val('f-name'); t.exec=val('f-exec'); t.status=val('f-status'); t.who=val('f-who'); t.deadline=val('f-deadline');
+ t._startM=parseInt(val('f-start')); t._endM=parseInt(val('f-end')); if(t._startM>t._endM)t._startM=t._endM;
+ t.deps=val('f-deps').split(/\s+/).filter(Boolean); t.link=val('f-link'); t.subs=collectSubs();
+ const p=projOfTask(code); p.touched=today(); closeModal(); toast(`Saved ${code}`); render();
+}
+function delTask(code){ const p=projOfTask(code); p.tasks=p.tasks.filter(t=>t.code!==code); closeModal(); toast(`Deleted ${code}`); render(); }
+function addTask(pcode){ const p=findProj(pcode); const n=p.tasks.length+1; const code=`${pcode}.${String(n).padStart(2,'0')}`; p.tasks.push({code,name:"New task",exec:"Build",status:"Concept",deadline:"",who:"Pete",deps:[],subs:[],link:"",_startM:0,_endM:1}); openTask(code); }
+
+function iconPicker(sel){ return `<div class="ipick" id="ipick">${GLYPH_NAMES.map(n=>`<span class="ip ${n===sel?'on':''}" data-ic="${n}" onclick="pickIcon('${n}')">${iconSVG(n,'#16140f',20)}</span>`).join("")}</div><input type="hidden" id="p-icon" value="${sel}">`; }
+function pickIcon(n){ document.getElementById('p-icon').value=n; document.querySelectorAll('#ipick .ip').forEach(e=>e.classList.toggle('on',e.dataset.ic===n)); }
+
+function openProj(code){
+ const p=findProj(code); if(!p)return;
+ const opts=(arr,sel)=>arr.map(o=>`<option ${o===sel?'selected':''}>${o}</option>`).join("");
+ openScrim(`<div class="modal-h">${pIcon(p,18)}<h3>${p.code} ${esc(p.name)}</h3><span class="x" onclick="closeModal()">✕</span></div>
+ <div class="modal-b">
+  <div class="fld"><label>Venture name</label><input id="p-name" value="${esc(p.name)}"></div>
+  <div class="fld"><label>One-line description</label><textarea id="p-one">${esc(p.one)}</textarea></div>
+  <div class="fld two"><div><label>Project type</label><select id="p-type">${opts(STATE.projectTypes,p.type)}</select></div><div><label>Status (state of play)</label><select id="p-status">${opts(STATE.statuses,p.status)}</select></div></div>
+  <div class="fld two"><div><label>Publication stage</label><select id="p-pub">${opts(STATE.pubStages,p.pub)}</select></div><div><label>Project deadline</label><input type="date" id="p-deadline" value="${p.deadline||''}"></div></div>
+  <div class="fld"><label>Readiness to publish — <b id="rdv">${p.readiness}</b>/100</label><div class="range"><input type="range" min="0" max="100" id="p-readiness" value="${p.readiness}" oninput="document.getElementById('rdv').textContent=this.value"></div></div>
+  <div class="fld two"><div><label>Thematic icon (visual ID)</label>${iconPicker(p.icon||'grid')}</div><div><label>Colour</label><input type="color" id="p-color" value="${p.color}" style="height:40px"></div></div>
+  <div class="fld"><label>Smallest next action (momentum)</label><input id="p-small" value="${esc(p.smallest)}"></div>
+  <div class="fld"><label>GitHub repo</label><input id="p-gh" value="${p.github||''}" placeholder="https://github.com/FetaPit/…"></div>
+  <div class="fld"><label>Parent company</label><select id="p-parent">${STATE.companies.map(c=>`<option value="${c.id}" ${(p.parent||'ptld')===c.id?'selected':''}>${c.name}</option>`).join("")}</select><span class="add" style="margin-left:6px;cursor:pointer;color:var(--blue);font-family:Space Mono;font-size:11px" onclick="closeModal();newCompany()">+ New parent</span></div>
+ </div>
+ <div class="modal-f"><button class="btn r" onclick="saveProj('${code}')">Save</button><button class="btn y" onclick="aiSuggest('${code}');closeModal()">✦ AI action</button><button class="btn" onclick="delProj('${code}')">Delete venture</button></div>`);
+}
+function saveProj(code){ const p=findProj(code); p.name=val('p-name');p.one=val('p-one');p.type=val('p-type');p.status=val('p-status');p.pub=val('p-pub');p.deadline=val('p-deadline');p.readiness=parseInt(val('p-readiness'));p.icon=val('p-icon');p.color=val('p-color');p.smallest=val('p-small');p.github=val('p-gh');p.parent=val('p-parent')||'ptld'; closeModal(); toast(`Saved ${p.name}`); render(); }
+function delProj(code){ if(STATE.projects.length<=1)return toast("Keep at least one"); STATE.projects=STATE.projects.filter(p=>p.code!==code); closeModal(); toast(`Deleted ${code}`); render(); }
+function newProject(){
+ let max=0; STATE.projects.forEach(p=>{const n=parseInt((p.code.split('.')[1]||"0"));if(n>max)max=n;});
+ const code=`26.${String(max+1).padStart(3,'0')}`;
+ const palette=["#1f4ed8","#d6402c","#16a34a","#7c3aed","#ea580c","#0ea5e9","#db2777","#ca8a04"];
+ const p={code,name:"New venture",type:"Software",icon:"grid",one:"Describe this venture in one line.",color:palette[STATE.projects.length%palette.length],deadline:"",readiness:5,pub:"Concept",status:"Concept",touched:today(),streak:0,github:"",source:"Created in-app",smallest:"Write the one-line description.",tasks:[{code:code+".01",name:"Define scope",exec:"Writing",status:"Concept",deadline:"",who:"Pete",deps:[],subs:[],link:"",_startM:0,_endM:1}]};
+ STATE.projects.push(p); toast(`Created ${code}`); openProj(code);
+}
+
+function addKnox(){ openScrim(`<div class="modal-h"><h3>Register document</h3><span class="x" onclick="closeModal()">✕</span></div><div class="modal-b">
+  <div class="fld two"><div><label>Project ref</label><input id="k-proj" placeholder="26.001"></div><div><label>Class</label><select id="k-cls">${STATE.classes.map(c=>`<option>${c}</option>`).join("")}</select></div></div>
+  <div class="fld"><label>Title</label><input id="k-title"></div>
+  <div class="fld two"><div><label>Type</label><input id="k-type" placeholder="Code / Doc / Patent…"></div><div><label>Exec</label><input id="k-exec" placeholder="BLD / LEG / WRT…"></div></div>
+  <div class="fld"><label>Location / link</label><input id="k-loc" placeholder="repo URL or VeraCrypt path"></div>
+  <div class="fld"><label>Note</label><input id="k-note"></div>
+ </div><div class="modal-f"><button class="btn r" onclick="saveKnox()">Register</button></div>`); }
+function saveKnox(){ const proj=val('k-proj')||"00.000"; const exec=(val('k-exec')||"DOC").toUpperCase(); const type=val('k-type')||"Doc"; const title=val('k-title')||"Untitled"; const cls=val('k-cls'); const date=today().replace(/-/g,''); const st=title.replace(/[^a-zA-Z0-9]/g,'').slice(0,18)||"Item"; const ref=`${proj}_${exec}_${type.slice(0,4).toUpperCase()}_${st}_${date}_v0.1_${cls}`; STATE.knox.push({proj,ref,title,type,cls,loc:val('k-loc'),note:val('k-note')}); closeModal(); toast("Registered to Knox"); render(); }
+
+/* ---------- UTIL ---------- */
+function val(id){ return document.getElementById(id).value; }
+function esc(s){ return (s||"").replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+function doExport(){ const blob=new Blob([JSON.stringify(STATE,null,2)],{type:"application/json"}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`PTLD-VentureControl-${today()}.json`; a.click(); toast("Exported JSON — your backup"); }
+function doImport(e){ const f=e.target.files[0]; if(!f)return; const r=new FileReader(); r.onload=()=>{ try{STATE=JSON.parse(r.result); if(!STATE.crm)STATE.crm={}; if(!STATE.time)STATE.time=[]; if(!STATE.plans)STATE.plans={}; if(!STATE.companies)STATE.companies=structuredClone(SEED.companies); if(!STATE.rates)STATE.rates=structuredClone(SEED.rates); if(!STATE.me)STATE.me="Pete"; if(!STATE.team)STATE.team=["Pete"]; DARK=!!STATE.dark; applyTheme(); const b=document.getElementById('idbtn'); if(b)b.textContent="You: "+STATE.me; initSchedule(); toast("Imported"); render();}catch(err){toast("Bad file");} }; r.readAsText(f); }
+
+/* ---------- MICRO TASK TOGGLE ---------- */
+function toggleSub(taskCode,i){ const t=findTask(taskCode); if(t&&t.subs&&t.subs[i]){ t.subs[i].done=!t.subs[i].done; const p=projOfTask(taskCode); if(p)p.touched=today(); render(); } }
+
+/* ---------- GENERIC SECTION COLLAPSE (knox, crm) ---------- */
+let SECT=new Set();
+function toggleSect(key){ if(SECT.has(key))SECT.delete(key); else SECT.add(key); render(); }
+
+/* ---------- PARENT COMPANY PROFILE ---------- */
+const CO_FIELDS=[
+ ["type","Type of company","studio, ltd, partnership, sole trader…"],
+ ["funded","Funding status","Bootstrapped, Pre-seed, Grant-funded, Revenue-funded…"],
+ ["state","State of business","Trading, Pre-launch, Dormant, Scaling…"],
+ ["note","Overview","what this company is and how the ventures relate"]
+];
+const CO_ROSTER=[["staff","Staff","employed / core"],["partners","Partners","equity, co-founders, JV"],["freelancers","Freelancers & collaborators","engaged per project"]];
+function renderCompany(){
+ const co=coById(COMPANY_ID); if(!co)return `<div class="profback" onclick="go('dash')">← Back</div>`;
+ const projs=projectsOfCo(co.id);
+ const val=projs.reduce((s,p)=>s+timeForProject(p.code).val,0);
+ const tasks=projs.reduce((s,p)=>s+p.tasks.length,0);
+ const avg=projs.length?Math.round(projs.reduce((s,p)=>s+p.readiness,0)/projs.length):0;
+ let h=`<div class="profback" onclick="go('dash')">← All ventures</div>`;
+ h+=`<div class="profhero" style="border-top-color:${co.color||'#d6402c'}"><div class="pt">${iconSVG(co.icon||'grid',co.color||'#d6402c',34)}<div><h2>${co.name}</h2></div></div>
+   <div class="meta">${co.type||'—'} · ${co.funded||'—'} · ${co.state||'—'} · ${projs.length} ventures · ${tasks} tasks · avg readiness ${avg}/100 · ${gbp(val)} logged</div></div>`;
+ // editable detail
+ h+=`<div class="psec" style="margin-bottom:14px"><div class="ph"><h3>Company detail</h3></div><div class="pbody">`;
+ CO_FIELDS.forEach(([k,label,hint])=>{ h+=`<div class="planfld"><label>${label}</label><textarea style="min-height:${k==='note'?'70px':'42px'}" onchange="saveCo('${co.id}','${k}',this.value)" placeholder="${hint}">${esc(co[k]||'')}</textarea></div>`; });
+ CO_ROSTER.forEach(([k,label,hint])=>{ h+=`<div class="planfld"><label>${label} <span class="hint">— ${hint}, comma-separated</span></label><textarea style="min-height:42px" onchange="saveCoList('${co.id}','${k}',this.value)" placeholder="${hint}">${esc((co[k]||[]).join(', '))}</textarea></div>`; });
+ h+=`</div></div>`;
+ // ventures under this company
+ h+=`<div class="psec" style="margin-bottom:14px"><div class="ph"><h3>Ventures under ${co.name}</h3><span class="cnt">${projs.length}</span></div><div class="pbody tlist">`;
+ projs.forEach(p=>{ h+=`<div class="ti" onclick="openProfile('${p.code}')"><span class="sdot ${SMAP[p.status]}"></span>${pIcon(p,16)}<span class="tc">${p.code}</span><span style="flex:1">${p.name}</span><span class="tc">${p.pub} · ${p.readiness}/100</span></div>`; });
+ if(!projs.length)h+=`<span class="crmempty">No ventures assigned yet. Set a venture's parent from its edit panel.</span>`;
+ h+=`</div></div>`;
+ return h;
+}
+function saveCo(id,k,v){ const co=coById(id); co[k]=v; saveState(); }
+function saveCoList(id,k,v){ const co=coById(id); co[k]=v.split(',').map(s=>s.trim()).filter(Boolean); saveState(); render(); }
+function newCompany(){
+ openScrim(`<div class="modal-h"><h3>New parent company</h3><span class="x" onclick="closeModal()">✕</span></div><div class="modal-b">
+   <div class="fld"><label>Company name</label><input id="co-name" placeholder="e.g. Redshift Records Ltd"></div>
+   <div class="fld two"><div><label>Short tag</label><input id="co-short" placeholder="RRL"></div><div><label>Colour</label><input id="co-color" type="color" value="#1f4ed8"></div></div>
+   <div class="fld"><label>Type</label><input id="co-type" placeholder="Ltd, partnership, sole trader…"></div>
+   <div class="fld two"><div><label>Funding</label><input id="co-funded" placeholder="Bootstrapped"></div><div><label>State</label><input id="co-state" placeholder="Pre-launch"></div></div>
+ </div><div class="modal-f"><button class="btn r" onclick="addCompany()">Create company</button></div>`);
+}
+function addCompany(){ const name=val('co-name').trim(); if(!name)return toast("Name needed"); const id="co"+Date.now().toString(36); STATE.companies.push({id,name,short:val('co-short').trim()||name.slice(0,4).toUpperCase(),color:val('co-color')||'#1f4ed8',icon:"grid",type:val('co-type'),funded:val('co-funded'),state:val('co-state'),partners:[],freelancers:[],staff:[],note:""}); closeModal(); toast("Company added — assign ventures from their edit panel"); openCompany(id); }
+
+/* ---------- VENTURE PROFILE PAGE ---------- */
+function timeForProject(code){ const es=(STATE.time||[]).filter(e=>e.proj===code); const mins=es.reduce((s,e)=>s+entryMins(e),0); const val=es.reduce((s,e)=>s+(e.billable===false?0:entryValue(e)),0); return {mins,val,n:es.length}; }
+function renderProfile(){
+ const p=findProj(PROFILE_CODE); if(!p)return `<div class="profback" onclick="go('dash')">← Back</div><div class="card"><div class="card-b">Venture not found.</div></div>`;
+ const c=crmOf(p.code); const tm=timeForProject(p.code); const kx=STATE.knox.filter(k=>k.proj===p.code);
+ const t=nextTask(p);
+ let h=`<div class="profback" onclick="go('dash')">← All ventures</div>`;
+ h+=`<div class="profhero" style="border-top-color:${p.color}"><div class="pt">${pIcon(p,34)}<div><h2>${p.code} ${p.name}</h2></div><span style="margin-left:auto">${ring(p.readiness,p.color)}</span></div>
+   <div style="margin-top:6px">${parentTag(p)}</div>
+   <div class="one">${p.one}</div>
+   <div class="meta">${p.type} · stage ${p.pub} · ${p.status} · readiness ${p.readiness}/100 · deadline ${p.deadline||'—'}</div>
+   <div class="pwrap" style="margin-top:10px;max-width:360px">${pbar(p)}<span class="mono muted" style="font-size:9px">tasks done</span></div>
+   <div style="margin-top:10px" class="row">
+     <button class="btn r" onclick="gotoTask('${(t||{}).code||''}')">▸ Next: ${p.smallest}</button>
+     <button class="btn y" onclick="aiSuggest('${p.code}')">✦ AI next action</button>
+     <button class="btn" onclick="openProj('${p.code}')">Edit venture</button>
+     ${p.github?`<a class="repo" href="${p.github}" target="_blank" style="padding:8px 12px">Repo ↗</a>`:''}
+   </div></div>`;
+ // quick facts + time
+ h+=`<div class="profgrid">
+   <div class="psec"><div class="ph"><h3>Status</h3></div><div class="pbody">
+     <div class="frow"><span class="k">Stage</span><b>${p.pub}</b></div>
+     <div class="frow"><span class="k">State of play</span><b>${p.status}</b></div>
+     <div class="frow"><span class="k">Readiness</span><b>${p.readiness}/100</b></div>
+     <div class="frow"><span class="k">Tasks done</span><b>${completion(p)}%</b></div>
+     <div class="frow"><span class="k">Streak</span><b>🔥 ${p.streak||0}</b></div></div></div>
+   <div class="psec"><div class="ph"><h3>Time & billing</h3></div><div class="pbody">
+     <div class="frow"><span class="k">Logged</span><b>${fmtHM(tm.mins)}</b></div>
+     <div class="frow"><span class="k">Billable value</span><b>${gbp(tm.val)}</b></div>
+     <div class="frow"><span class="k">Entries</span><b>${tm.n}</b></div>
+     <div class="frow"><span class="k">Source</span><span class="mono" style="font-size:10px">${p.source||'—'}</span></div></div></div>
+   <div class="psec"><div class="ph"><h3>Team & opportunities</h3><span class="cnt">${c.team.length}p · ${c.opps.length}o</span></div><div class="pbody">
+     ${c.team.map(m=>`<span class="tchip">${m.name}<span class="tr">${m.role||''}</span></span>`).join('')||'<span class="crmempty">No team yet</span>'}
+     <div style="margin-top:8px">${c.opps.map(o=>`<div class="om" style="margin-bottom:4px"><span class="kind">${o.kind}</span><span class="spill ${o.status}">${o.status}</span> <span style="font-size:12px">${o.title}</span></div>`).join('')||'<span class="crmempty">No opportunities</span>'}</div>
+     <button class="mini" onclick="go('crm')" style="margin-top:8px">Manage in Team & Opps</button></div></div>
+ </div>`;
+ // tasks
+ h+=`<div class="psec" style="margin-bottom:14px"><div class="ph"><h3>Tasks & sub-tasks</h3><span class="cnt">${p.tasks.length} tasks</span></div><div class="pbody tlist">`;
+ p.tasks.forEach(tk=>{ h+=`<div class="ti" onclick="gotoTask('${tk.code}')"><span class="sdot ${SMAP[tk.status]}"></span><span class="tc">${tk.code}</span><span style="flex:1">${tk.name}</span><span class="tc">${tk.deadline||''}</span>${(tk.subs&&tk.subs.length)?`<span class="tc">${tk.subs.filter(s=>s.done).length}/${tk.subs.length}μ</span>`:''}</div>`; });
+ h+=`</div></div>`;
+ // knox
+ h+=`<div class="psec" style="margin-bottom:14px"><div class="ph"><h3>Knox — documents & IP</h3><span class="cnt">${kx.length}</span></div><div class="pbody">`;
+ if(kx.length){ kx.forEach(k=>{ const loc=k.loc&&k.loc.startsWith('http')?`<a class="repo" href="${k.loc}" target="_blank">OPEN ↗</a>`:`<span class="mono muted" style="font-size:10px">${k.loc||''}</span>`; h+=`<div class="frow"><span style="flex:1"><span class="mono" style="font-size:9px;color:var(--muted)">${k.ref}</span><br>${k.title}</span><span>${loc}</span></div>`; }); }
+ else h+=`<span class="crmempty">No documents registered. Add them in Vault-It Knox.</span>`;
+ h+=`</div></div>`;
+ // business plan
+ h+=renderPlan(p);
+ return h;
+}
+
+/* ---------- BUSINESS PLAN (lean, solo-founder) ---------- */
+function planDefaults(p){
+ const milestones=p.tasks.slice(0,5).map(t=>`- ${t.name}${t.deadline?` (by ${t.deadline})`:''}`).join('\n');
+ const base={
+  vision:"", problem:"", solution:p.one||"", customer:"", edge:"",
+  revenue:"", gtm:"", milestones:milestones, costs:"", risks:"", focus:""
+ };
+ // light tailoring by venture
+ if(p.code==="26.001"){ base.vision="Help people convert debt into ownership and see net worth grow as something they build."; base.customer="UK retail investors and FIRE-minded savers, 25 to 45, already using Trading 212 / Monzo."; base.revenue="Freemium. Free tier; Founder £5/mo; Pro £15/mo. Founder price locked for the 33 + 99 testers."; base.gtm="Closed alpha to 33, beta to 99, then App Store, Google Play and web PWA. Seed via r/UKInvesting and the T212 community."; base.edge="The isometric house plus a Claude thesis layer. Ownership made visual, not another spreadsheet."; }
+ if(p.code==="26.002"){ base.customer="Independent artists, labels and music supervisors who need clean on-device catalogues."; base.revenue="Paid app and/or pro tier for export and verification. Sync/catalogue licensing later."; base.edge="On-device, privacy-respecting curation with a verification layer. Works offline."; }
+ if(p.code==="26.014"){ base.revenue="Stacked near-passive income: training-data platforms, digital downloads, stock video."; base.gtm="Onboard to Outlier/Scale/Appen, automate with n8n on the TerraMaster, list downloads."; base.edge="Automation-first. Fifteen minutes a day at scale once workflows are set."; }
+ return base;
+}
+function planOf(code){ if(!STATE.plans)STATE.plans={}; if(!STATE.plans[code])STATE.plans[code]=planDefaults(findProj(code)); return STATE.plans[code]; }
+const PLAN_FIELDS=[
+ ["vision","Vision","one line — why this exists"],
+ ["problem","Problem","the specific pain you remove"],
+ ["solution","Solution / value proposition","what you offer and why it is better"],
+ ["customer","Target customer","who pays, as narrow as you can"],
+ ["edge","Differentiation / unfair advantage","what others cannot easily copy"],
+ ["revenue","Revenue model & pricing","how money comes in, actual numbers"],
+ ["gtm","Go-to-market","first 100 users/customers, channels"],
+ ["milestones","Key milestones","next few, dated — pulled from your tasks"],
+ ["costs","Costs & resources","what it takes: tools, time, money"],
+ ["risks","Risks & unknowns","what could kill it, honestly"],
+ ["focus","Next 90 days","the one outcome that matters now"]
+];
+function renderPlan(p){
+ const pl=planOf(p.code);
+ let h=`<div class="plan" id="printplan"><div class="ph">${pIcon(p,18)}<h3>Business plan — ${p.code} ${p.name}</h3></div>
+  <div class="guidetag">Lean one-page plan for solo founders: outcomes over prose. Fill what you know, leave the rest. It compounds as the venture moves.</div>
+  <div class="pbody">`;
+ PLAN_FIELDS.forEach(([k,label,hint])=>{ h+=`<div class="planfld"><label>${label} <span class="hint">— ${hint}</span></label><textarea onchange="savePlan('${p.code}','${k}',this.value)" placeholder="${hint}">${esc(pl[k]||'')}</textarea></div>`; });
+ h+=`</div><div class="planexport">
+   <button class="btn r" onclick="exportPlanPDF('${p.code}')">Save as PDF</button>
+   <button class="btn b" onclick="exportPlanDocs('${p.code}')">Export to Google Docs</button>
+   <button class="btn" onclick="downloadPlanDoc('${p.code}')">Download .doc</button>
+ </div></div>`;
+ return h;
+}
+function savePlan(code,k,v){ planOf(code)[k]=v; saveState(); }
+function planText(code){ const p=findProj(code); const pl=planOf(code); let t=`BUSINESS PLAN\n${p.code} ${p.name}\n${p.type} · ${p.pub} · readiness ${p.readiness}/100\n${p.one}\n\n`;
+ PLAN_FIELDS.forEach(([k,label])=>{ t+=`${label.toUpperCase()}\n${pl[k]||'(to define)'}\n\n`; }); t+=`Prepared by ${STATE.me} · PT Live Design · ${today()}`; return t; }
+function planHTML(code){ const p=findProj(code); const pl=planOf(code); let b=`<h1>Business Plan — ${p.code} ${p.name}</h1><p><b>${p.type} · ${p.pub} · readiness ${p.readiness}/100</b></p><p>${p.one}</p>`;
+ PLAN_FIELDS.forEach(([k,label])=>{ b+=`<h2>${label}</h2><p>${(pl[k]||'(to define)').replace(/\n/g,'<br>')}</p>`; }); b+=`<hr><p>Prepared by ${STATE.me} · PT Live Design · ${today()}</p>`; return b; }
+function exportPlanPDF(code){ const w=window.open('','_blank'); if(!w)return toast("Allow pop-ups to print"); w.document.write(`<html><head><title>${code} Business Plan</title><style>body{font-family:Georgia,serif;max-width:760px;margin:30px auto;padding:0 20px;line-height:1.6;color:#16140f}h1{font-family:Arial}h2{font-family:Arial;border-bottom:2px solid #16140f;padding-bottom:3px;margin-top:22px;font-size:15px}</style></head><body>${planHTML(code)}</body></html>`); w.document.close(); setTimeout(()=>w.print(),300); }
+function exportPlanDocs(code){ copy(planText(code)); window.open("https://docs.google.com/document/create","_blank"); toast("Plan copied — paste into the new Google Doc (Ctrl/Cmd+V)"); }
+function downloadPlanDoc(code){ const html=`<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word'><head><meta charset='utf-8'></head><body>${planHTML(code)}</body></html>`; const blob=new Blob([html],{type:"application/msword"}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`${code}-business-plan.doc`; a.click(); toast("Downloaded .doc — open or upload to Google Drive"); }
+
+/* ---------- THEME ---------- */
+function toggleTheme(){ DARK=!DARK; document.body.classList.toggle('dark',DARK); const b=document.getElementById('themebtn'); if(b)b.textContent=DARK?'◑ Light':'◐ Dark'; if(VIEW==="gantt")requestAnimationFrame(drawDepLines); }
+
+/* ---------- TEAM & OPPORTUNITIES ---------- */
+function crmOf(code){ if(!STATE.crm)STATE.crm={}; if(!STATE.crm[code])STATE.crm[code]={team:[],opps:[]}; const c=STATE.crm[code]; if(!c.team)c.team=[]; if(!c.opps)c.opps=[]; return c; }
+function renderCRM(){
+ const totT=Object.values(STATE.crm||{}).reduce((s,c)=>s+((c.team||[]).length),0);
+ const totO=Object.values(STATE.crm||{}).reduce((s,c)=>s+((c.opps||[]).length),0);
+ let h=`<div class="card"><div class="card-h"><span class="cdot" style="background:var(--blue)"></span><h3>Team & Opportunities</h3><span class="code">${totT} people · ${totO} opportunities · tied to ventures</span></div></div>`;
+ h+=`<div class="crmgrid">`;
+ STATE.projects.forEach(p=>{
+   const c=crmOf(p.code); const col=SECT.has('crm:'+p.code);
+   h+=`<div class="crmcard" style="border-top:6px solid ${p.color}"><div class="ch cclick" onclick="toggleSect('crm:${p.code}')"><span class="caret">${col?'▸':'▾'}</span>${plink(p.code,pIcon(p,18))}<span class="cc">${p.code}</span><span class="cn plink" onclick="event.stopPropagation();openProfile('${p.code}')">${p.name}</span><span class="cnt" style="margin-left:auto;font-family:Space Mono;font-size:10px;color:var(--muted)">${c.team.length}p·${c.opps.length}o</span></div>`;
+   if(!col){ h+=`<div class="cb">`;
+   h+=`<div class="seclab">Team / contacts <span class="add" onclick="openPerson('${p.code}',-1)">+ Person</span></div>`;
+   if(c.team.length){ h+=`<div>`; c.team.forEach((m,i)=>{ h+=`<span class="tchip" onclick="openPerson('${p.code}',${i})">${m.name}<span class="tr">${m.role||''}</span></span>`; }); h+=`</div>`; }
+   else h+=`<div class="crmempty">No one tied yet.</div>`;
+   h+=`<div class="seclab" style="margin-top:10px">Opportunities <span class="add" onclick="openOpp('${p.code}',-1)">+ Opportunity</span></div>`;
+   if(c.opps.length){ c.opps.forEach((o,i)=>{ h+=`<div class="opp" onclick="openOpp('${p.code}',${i})"><div class="ot">${o.title}</div><div class="om"><span class="kind">${o.kind}</span><span class="spill ${o.status}">${o.status}</span></div>${o.note?`<div class="on">${o.note}</div>`:''}</div>`; }); }
+   else h+=`<div class="crmempty">No opportunities logged.</div>`;
+   h+=`</div>`; }
+   h+=`</div>`;
+ });
+ h+=`</div>`;
+ return h;
+}
+function openPerson(code,idx){ const c=crmOf(code); const m=idx>=0?c.team[idx]:{name:"",role:""};
+ openScrim(`<div class="modal-h"><h3>${idx>=0?'Edit person':'Add person'} · ${code}</h3><span class="x" onclick="closeModal()">✕</span></div><div class="modal-b">
+  <div class="fld"><label>Name</label><input id="pe-name" value="${esc(m.name)}"></div>
+  <div class="fld"><label>Role / relationship</label><input id="pe-role" value="${esc(m.role||'')}" placeholder="mentor, build, client lead…"></div>
+ </div><div class="modal-f"><button class="btn r" onclick="savePerson('${code}',${idx})">Save</button>${idx>=0?`<button class="btn" onclick="delPerson('${code}',${idx})">Delete</button>`:''}</div>`); }
+function savePerson(code,idx){ const c=crmOf(code); const o={name:val('pe-name'),role:val('pe-role')}; if(!o.name.trim())return toast("Name needed"); if(idx>=0)c.team[idx]=o; else c.team.push(o); closeModal(); toast("Saved"); render(); }
+function delPerson(code,idx){ crmOf(code).team.splice(idx,1); closeModal(); render(); }
+function openOpp(code,idx){ const c=crmOf(code); const o=idx>=0?c.opps[idx]:{title:"",kind:"Partner",status:"Lead",note:""};
+ const opts=(arr,sel)=>arr.map(x=>`<option ${x===sel?'selected':''}>${x}</option>`).join("");
+ openScrim(`<div class="modal-h"><h3>${idx>=0?'Edit opportunity':'Add opportunity'} · ${code}</h3><span class="x" onclick="closeModal()">✕</span></div><div class="modal-b">
+  <div class="fld"><label>Title</label><input id="op-title" value="${esc(o.title)}"></div>
+  <div class="fld two"><div><label>Kind</label><select id="op-kind">${opts(STATE.oppKinds,o.kind)}</select></div><div><label>Status</label><select id="op-status">${opts(STATE.oppStatuses,o.status)}</select></div></div>
+  <div class="fld"><label>Note</label><input id="op-note" value="${esc(o.note||'')}"></div>
+ </div><div class="modal-f"><button class="btn r" onclick="saveOpp('${code}',${idx})">Save</button>${idx>=0?`<button class="btn" onclick="delOpp('${code}',${idx})">Delete</button>`:''}</div>`); }
+function saveOpp(code,idx){ const c=crmOf(code); const o={title:val('op-title'),kind:val('op-kind'),status:val('op-status'),note:val('op-note')}; if(!o.title.trim())return toast("Title needed"); if(idx>=0)c.opps[idx]=o; else c.opps.push(o); closeModal(); toast("Saved"); render(); }
+function delOpp(code,idx){ crmOf(code).opps.splice(idx,1); closeModal(); render(); }
+
+/* ---------- TIME ACTIONS ---------- */
+function uid(){ return 't'+Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
+function clockInModal(){
+ const a=activeEntry(); if(a)return toast("Already clocked in — clock out first");
+ const popts=STATE.projects.map(p=>`<option value="${p.code}">${p.code} ${p.name}</option>`).join("");
+ const sopts=(STATE.rates||[]).map(r=>`<option>${r.skill}</option>`).join("");
+ openScrim(`<div class="modal-h"><span class="pulse"></span><h3>Clock in</h3><span class="x" onclick="closeModal()">✕</span></div><div class="modal-b">
+   <div class="fld"><label>Venture</label><select id="ci-proj">${popts}</select></div>
+   <div class="fld"><label>Skill deployed (sets the rate)</label><select id="ci-skill">${sopts}</select></div>
+   <div class="fld"><label>Note (optional)</label><input id="ci-note" placeholder="what are you doing"></div>
+ </div><div class="modal-f"><button class="btn r" onclick="clockIn()">▶ Start timer</button></div>`);
+}
+function clockIn(){ STATE.time=STATE.time||[]; STATE.time.push({id:uid(),proj:val('ci-proj'),skill:val('ci-skill'),start:new Date().toISOString(),end:null,note:val('ci-note'),who:STATE.me,billable:true}); const p=findProj(val('ci-proj')); if(p){if(p.touched!==today())p.streak=(p.streak||0)+1;p.touched=today();} closeModal(); toast("⏱ Clocked in"); render(); }
+function clockOut(){ const e=activeEntry(); if(!e)return; e.end=new Date().toISOString(); e.mins=entryMins(e); toast(`■ Logged ${fmtHM(e.mins)} · ${gbp(entryValue(e))}`); render(); }
+
+function timeModal(e){ const isNew=!e; e=e||{proj:STATE.projects[0].code,skill:(STATE.rates[0]||{}).skill,start:new Date().toISOString(),end:new Date().toISOString(),note:"",who:STATE.me,billable:true};
+ const popts=STATE.projects.map(p=>`<option value="${p.code}" ${p.code===e.proj?'selected':''}>${p.code} ${p.name}</option>`).join("");
+ const sopts=(STATE.rates||[]).map(r=>`<option ${r.skill===e.skill?'selected':''}>${r.skill}</option>`).join("");
+ const dt=s=>s?new Date(s).toISOString().slice(0,16):"";
+ openScrim(`<div class="modal-h"><h3>${isNew?'Log time':'Edit entry'}</h3><span class="x" onclick="closeModal()">✕</span></div><div class="modal-b">
+   <div class="fld"><label>Venture</label><select id="t-proj">${popts}</select></div>
+   <div class="fld"><label>Skill deployed</label><select id="t-skill">${sopts}</select></div>
+   <div class="fld two"><div><label>Start</label><input type="datetime-local" id="t-start" value="${dt(e.start)}"></div><div><label>End</label><input type="datetime-local" id="t-end" value="${dt(e.end)}"></div></div>
+   <div class="fld"><label>Note</label><input id="t-note" value="${esc(e.note||'')}"></div>
+   <div class="fld"><label><input type="checkbox" id="t-bill" ${e.billable!==false?'checked':''}> Billable</label></div>
+ </div><div class="modal-f"><button class="btn r" onclick="saveTime('${isNew?'':e.id}')">Save</button>${isNew?'':`<button class="btn" onclick="delTime('${e.id}')">Delete</button>`}</div>`);
+}
+function addTimeModal(){ timeModal(null); }
+function editTime(id){ timeModal((STATE.time||[]).find(e=>e.id===id)); }
+function saveTime(id){ const start=new Date(val('t-start')).toISOString(); const end=val('t-end')?new Date(val('t-end')).toISOString():null; const o={proj:val('t-proj'),skill:val('t-skill'),start,end,note:val('t-note'),who:STATE.me,billable:document.getElementById('t-bill').checked}; if(end)o.mins=Math.max(0,Math.round((new Date(end)-new Date(start))/60000));
+ if(id){ const e=STATE.time.find(x=>x.id===id); Object.assign(e,o); } else { o.id=uid(); STATE.time=STATE.time||[]; STATE.time.push(o); }
+ closeModal(); toast("Saved entry"); render(); }
+function delTime(id){ STATE.time=STATE.time.filter(e=>e.id!==id); closeModal(); toast("Deleted"); render(); }
+
+/* ---------- RATE CARD ---------- */
+function setRate(i,k,v){ STATE.rates[i][k]= k==='rate'?(parseFloat(v)||0):v; saveState(); if(VIEW==="time")render(); }
+function addRate(){ STATE.rates.push({skill:"New skill",rate:75}); render(); }
+function delRate(i){ STATE.rates.splice(i,1); render(); }
+
+/* ---------- IDENTITY ---------- */
+function changeMe(){ const team=STATE.team||["Pete"];
+ openScrim(`<div class="modal-h"><h3>Who is logging?</h3><span class="x" onclick="closeModal()">✕</span></div><div class="modal-b">
+   <div class="fld"><label>Your name (tags your time + edits, ready for your hires)</label><input id="me-name" value="${esc(STATE.me)}"></div>
+   <div class="fld"><label>Team roster (comma-separated)</label><input id="me-team" value="${esc(team.join(', '))}"></div>
+   <div class="convention" style="margin:0">When your hires join, add them here and they pick their name. True multi-user sync arrives when you connect the Supabase backend (see the deploy notes).</div>
+ </div><div class="modal-f"><button class="btn r" onclick="saveMe()">Save</button></div>`);
+}
+function saveMe(){ STATE.me=val('me-name').trim()||"Pete"; STATE.team=val('me-team').split(',').map(s=>s.trim()).filter(Boolean); const b=document.getElementById('idbtn'); if(b)b.textContent="You: "+STATE.me; closeModal(); toast("Identity set"); render(); }
+
+/* ---------- THEME (persisted) ---------- */
+function toggleTheme(){ DARK=!DARK; STATE.dark=DARK; applyTheme(); saveState(); if(VIEW==="gantt")requestAnimationFrame(drawDepLines); }
+function applyTheme(){ document.body.classList.toggle('dark',DARK); const b=document.getElementById('themebtn'); if(b)b.textContent=DARK?'◑ Light':'◐ Dark'; }
+
+/* ---------- BOOT ---------- */
+if(!STATE.crm)STATE.crm={}; if(!STATE.time)STATE.time=[]; if(!STATE.plans)STATE.plans={}; if(!STATE.companies)STATE.companies=structuredClone(SEED.companies); if(!STATE.rates)STATE.rates=structuredClone(SEED.rates); if(!STATE.me)STATE.me="Pete"; if(!STATE.team)STATE.team=["Pete"];
+DARK=!!STATE.dark; applyTheme();
+const idb=document.getElementById('idbtn'); if(idb)idb.textContent="You: "+STATE.me;
+const sd=document.getElementById('savedot'); if(sd)sd.textContent=STORE_OK?'autosaving':'memory only';
+initSchedule(); renderNav(); render();
+setInterval(tickTimer,1000);
+</script>
+</body></html>
